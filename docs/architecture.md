@@ -62,6 +62,11 @@ name set:
 - registered names matching `alwaysVisible`;
 - the reserved `run_code` transport when DSH exposes it.
 
+The Tokens distribution defaults `alwaysVisible` to the common file, shell,
+Skill, task, interaction, and file-return tools used on nearly every product
+session. This keeps routine work direct while deferring plugin-specific and
+low-frequency schemas.
+
 The complete registry remains visible to in-process code. The assembly
 waterfall filters only the final `PromptAssembly.tools` projection. In Code
 Mode and `both` mode, the `tools:sdk` section is regenerated from the same

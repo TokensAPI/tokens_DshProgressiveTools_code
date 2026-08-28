@@ -34,8 +34,16 @@ The default patterns are:
 
 ```yaml
 alwaysVisible:
+  - read
+  - write
+  - edit
+  - glob
+  - grep
+  - bash
   - skill
   - ask_user_question
+  - todo_write
+  - dsh_im_return_file
   - report
   - submit_*
   - structured_output*
@@ -188,7 +196,7 @@ Prefer stable mode when context-cache reuse is important.
 ## Full stable example
 
 ```yaml
-- id: progressive-tools
+- id: tokens-progressive-tools
   config:
     mode: stable-proxy
     toolName: tool_search
@@ -197,7 +205,7 @@ Prefer stable mode when context-cache reuse is important.
     requireDiscovery: true
     statusGrantsDiscovery: false
     deferToolGuidance: true
-    alwaysVisible: [skill, ask_user_question, report, submit_*, structured_output*]
+    alwaysVisible: [read, write, edit, glob, grep, bash, skill, ask_user_question, todo_write, dsh_im_return_file, report, submit_*, structured_output*]
     groups:
       - id: browser
         description: Browser navigation and page interaction
@@ -220,7 +228,7 @@ exact definitions and uses `tool_dispatch` instead of exposing a native family.
 To retain v0.1 call semantics while taking the lifecycle fixes:
 
 ```yaml
-- id: progressive-tools
+- id: tokens-progressive-tools
   config:
     mode: dynamic
 ```

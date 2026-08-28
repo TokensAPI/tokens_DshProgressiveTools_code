@@ -1,10 +1,10 @@
-# DSH Progressive Tools
+# Tokens Progressive Tools
 
-[![CI](https://github.com/everclear077/dsh-progressive-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/everclear077/dsh-progressive-tools/actions/workflows/ci.yml)
-[![version](https://img.shields.io/badge/version-0.3.0-blue.svg)](./CHANGELOG.md)
+[![CI](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/ci.yml/badge.svg)](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/ci.yml)
+[![version](https://img.shields.io/badge/version-0.1.0-blue.svg)](./CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
-Cache-stable progressive tool discovery for DeepSeek Harness. The default mode
+TokensCowork's cache-stable progressive tool discovery for DeepSeek Harness. The default mode
 sends a small, fixed tool surface on the first request, keeps the complete
 catalog in process memory, and executes discovered tools through the ordinary
 Harness pipeline.
@@ -68,13 +68,13 @@ and cancellation still run for the selected real tool.
 ## Requirements
 
 - Node.js `^22.19.0` or `>=24.0.0`
-- DeepSeek Harness `0.1.1-rc.2` or a compatible `0.1.x` release
+- DeepSeek Harness `0.1.0-rc.8`
 - pnpm for source installation and development
 
 ## Install
 
 ```sh
-dsh plugin --profile web add github:everclear077/dsh-progressive-tools#v0.3.0
+dsh plugin --profile web add @tokensapi/dsh-progressive-tools
 ```
 
 Source installs run the package `prepare` script. If pnpm asks for build
@@ -83,7 +83,7 @@ authorization, add the exact package key it reports to the profile's
 
 ```yaml
 allowBuilds:
-  dsh-progressive-tools: true
+  '@tokensapi/dsh-progressive-tools': true
 ```
 
 Verify the composed layer before starting the profile:
@@ -92,7 +92,7 @@ Verify the composed layer before starting the profile:
 dsh --profile web --dump-config
 ```
 
-The dump should contain the `progressive-tools` row contributed by this bundle.
+The dump should contain the `tokens-progressive-tools` row contributed by this bundle.
 
 ## Use
 
@@ -100,8 +100,9 @@ The default direct surface contains:
 
 - `tool_search`;
 - `tool_dispatch`;
-- `skill`, `ask_user_question`, `report`, `submit_*`, and
-  `structured_output*` when registered;
+- `read`, `write`, `edit`, `glob`, `grep`, `bash`, `skill`,
+  `ask_user_question`, `todo_write`, `dsh_im_return_file`, `report`,
+  `submit_*`, and `structured_output*` when registered;
 - reserved Harness presentation transports when the active tool mode needs
   them.
 
@@ -147,7 +148,7 @@ top-level request.
 The default configuration is intentionally small:
 
 ```yaml
-- id: progressive-tools
+- id: tokens-progressive-tools
   config:
     mode: stable-proxy
     toolName: tool_search
@@ -157,8 +158,16 @@ The default configuration is intentionally small:
     statusGrantsDiscovery: false
     deferToolGuidance: true
     alwaysVisible:
+      - read
+      - write
+      - edit
+      - glob
+      - grep
+      - bash
       - skill
       - ask_user_question
+      - todo_write
+      - dsh_im_return_file
       - report
       - submit_*
       - structured_output*
@@ -167,7 +176,7 @@ The default configuration is intentionally small:
 Family rules improve search without changing the stable request surface:
 
 ```yaml
-- id: progressive-tools
+- id: tokens-progressive-tools
   config:
     groups:
       - id: browser
@@ -233,4 +242,5 @@ and [plugin packaging](https://deepseek-harness.github.io/deepseek-harness/devel
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](./LICENSE). The upstream origin and retained attribution are recorded in
+[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).

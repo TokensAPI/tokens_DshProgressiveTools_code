@@ -6,6 +6,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.1.0] - 2026-08-28
+
+### Added
+
+- Tokens-owned package and Cordis identities for marketplace distribution.
+- A product-tuned stable direct surface for common file, shell, Skill, task,
+  interaction, and file-return tools.
+- Exact DSH `0.1.0-rc.8` development and peer compatibility, including a
+  fully pinned rc.8 test graph.
+- Package identity tests and retained upstream MIT attribution.
+
+### Based on
+
+- Upstream `dsh-progressive-tools` 0.3.0 at commit
+  `8d516b9933d5b7812ab39c929fd9ee5df66d5221`.
+
 ## [0.3.0] - 2026-08-25
 
 Upgrading changes the stable discovery prompt text, so every deployment pays
@@ -101,7 +117,8 @@ prefix is byte-stable again from the second request onward.
 - Bundle manifest, GitHub source-install build path, documentation, tests, and
   continuous integration.
 
-[Unreleased]: https://github.com/everclear077/dsh-progressive-tools/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.1.0...HEAD
+[Tokens 0.1.0]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.1.0
 [0.3.0]: https://github.com/everclear077/dsh-progressive-tools/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/everclear077/dsh-progressive-tools/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/everclear077/dsh-progressive-tools/releases/tag/v0.1.0

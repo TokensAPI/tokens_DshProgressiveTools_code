@@ -1,6 +1,6 @@
-# DSH Progressive Tools
+# Tokens 渐进式工具
 
-为 DeepSeek Harness 提供缓存稳定的渐进式工具发现。默认模式从真实首个请求
+为 TokensCowork 提供缓存稳定的渐进式工具发现。默认模式从真实首个请求
 开始只发送固定的小工具面，完整目录保留在进程内，搜索到的工具仍通过 DSH
 原有执行管线完成调用。
 
@@ -58,7 +58,7 @@ tool_search 结果 ─────┴──► 把命中的精确定义追加到
 ## 安装
 
 ```sh
-dsh plugin --profile web add github:everclear077/dsh-progressive-tools#v0.3.0
+dsh plugin --profile web add @tokensapi/dsh-progressive-tools
 ```
 
 如果 pnpm 要求授权源码构建，把错误信息中给出的精确包名加入对应 profile 的
@@ -66,7 +66,7 @@ dsh plugin --profile web add github:everclear077/dsh-progressive-tools#v0.3.0
 
 ```yaml
 allowBuilds:
-  dsh-progressive-tools: true
+  '@tokensapi/dsh-progressive-tools': true
 ```
 
 安装后检查组合结果：
@@ -75,7 +75,7 @@ allowBuilds:
 dsh --profile web --dump-config
 ```
 
-输出中应包含本 bundle 提供的 `progressive-tools` 配置行。
+输出中应包含本 bundle 提供的 `tokens-progressive-tools` 配置行。
 
 ## 使用
 
@@ -83,8 +83,9 @@ dsh --profile web --dump-config
 
 - `tool_search`；
 - `tool_dispatch`；
-- 已注册的 `skill`、`ask_user_question`、`report`、`submit_*` 和
-  `structured_output*`；
+- 已注册的 `read`、`write`、`edit`、`glob`、`grep`、`bash`、`skill`、
+  `ask_user_question`、`todo_write`、`dsh_im_return_file`、`report`、
+  `submit_*` 和 `structured_output*`；
 - 当前工具呈现模式所需的 Harness 保留传输工具。
 
 正常对话不需要用户强制说明先调用 `tool_search`。插件会提供一段固定系统
@@ -125,7 +126,7 @@ dsh --profile web --dump-config
 默认配置：
 
 ```yaml
-- id: progressive-tools
+- id: tokens-progressive-tools
   config:
     mode: stable-proxy
     toolName: tool_search
@@ -135,8 +136,16 @@ dsh --profile web --dump-config
     statusGrantsDiscovery: false
     deferToolGuidance: true
     alwaysVisible:
+      - read
+      - write
+      - edit
+      - glob
+      - grep
+      - bash
       - skill
       - ask_user_question
+      - todo_write
+      - dsh_im_return_file
       - report
       - submit_*
       - structured_output*
@@ -145,7 +154,7 @@ dsh --profile web --dump-config
 工具族只参与搜索排序，不会改变稳定请求工具面：
 
 ```yaml
-- id: progressive-tools
+- id: tokens-progressive-tools
   config:
     groups:
       - id: browser
@@ -203,4 +212,5 @@ pnpm run check
 
 ## 许可证
 
-[MIT](./LICENSE)
+[MIT](./LICENSE)。上游来源和保留的版权归属记录在
+[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)。

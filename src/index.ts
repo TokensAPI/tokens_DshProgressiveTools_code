@@ -94,7 +94,7 @@ export type {
   ToolSchemaView,
 } from './types.js'
 
-export const name = 'progressive-tools'
+export const name = 'tokens-progressive-tools'
 export const inject = ['tools', 'systemPrompt']
 
 export interface Config {
@@ -904,7 +904,7 @@ export function apply(ctx: Context, input: Config): void {
     }))
 
     ctx.systemPrompt.section({
-      name: 'progressive-tools:discovery',
+      name: 'tokens-progressive-tools:discovery',
       order: 140,
       text: `Only the common tools are listed initially. When the task needs another capability, call ${config.toolName}; then call ${config.dispatchToolName} with an exact returned name and schema-valid arguments. Tool names mentioned elsewhere in this prompt but not listed as callable must be discovered the same way before dispatch. Use action "status" to browse the complete deferred catalog. Do not claim a capability is unavailable before searching.`,
     })
