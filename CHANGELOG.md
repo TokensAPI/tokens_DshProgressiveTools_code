@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.1.1] - 2026-08-29
+
+### Fixed
+
+- Removed the install-time `prepare` lifecycle script so managed plugin
+  markets can verify and install the prebuilt package without executing
+  package scripts on user machines.
+
 ## [Tokens 0.1.0] - 2026-08-28
 
 ### Added

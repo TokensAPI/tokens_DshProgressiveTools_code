@@ -1,6 +1,6 @@
 {
   "name": "@tokensapi/dsh-progressive-tools",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TokensCowork cache-stable progressive tool discovery and dispatch for DeepSeek Harness",
   "type": "module",
   "main": "lib/index.js",
@@ -33,7 +33,6 @@
     "audit:session": "node scripts/audit-session.mjs",
     "check": "node --check scripts/audit-session.mjs && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build && pnpm run publint",
     "publint": "publint",
-    "prepare": "pnpm run build",
     "prepack": "pnpm run check"
   },
   "engines": {
