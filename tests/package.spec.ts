@@ -14,7 +14,7 @@ describe('Tokens package contract', () => {
     const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
 
     expect(manifest.name).toBe('@tokensapi/dsh-progressive-tools')
-    expect(manifest.version).toBe('0.1.1')
+    expect(manifest.version).toBe('0.1.2')
     expect(manifest.dsh.bundle.patch).toBe('./cordis.patch.yml')
     expect(name).toBe('tokens-progressive-tools')
     expect(patch).toContain('id: tokens-progressive-tools')

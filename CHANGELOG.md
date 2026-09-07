@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.1.2] - 2026-09-07
+
+### Fixed
+
+- `tool_search` now states that the catalog is indexed in English and asks for
+  English keywords, so non-English requests are translated before searching
+  instead of missing every tool.
+- A search that matches nothing now returns the deferred family list and a
+  retry instruction instead of an empty array, so an unmatched query is no
+  longer read as "the capability does not exist". An empty match set still
+  discovers nothing, so dispatch gating is unchanged.
 ## [Tokens 0.1.1] - 2026-08-29
 
 ### Fixed

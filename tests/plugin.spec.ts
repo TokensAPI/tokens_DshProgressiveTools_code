@@ -84,6 +84,30 @@ async function execute(ctx: Context, agent: Agent, name: string, argumentsValue:
 }
 
 describe('progressive tools plugin', () => {
+  it('answers an unmatched search with the family list instead of an empty result', async () => {
+    const { agent, ctx } = await setup()
+    await assemble(ctx, agent)
+
+    const miss = await execute(ctx, agent, 'tool_search', { query: '浏览器' }, 'miss')
+    expect(miss.isError).toBe(false)
+    const value = miss.isError
+      ? undefined
+      : miss.value as {
+        matches: { name: string }[]
+        groups?: { id: string, tools: string[] }[]
+        instruction: string
+        discoveredTools: string[]
+      }
+
+    // 搜不到时仍要给出可走的下一步:家族清单 + 改用英文重试的指引。
+    expect(value?.matches).toEqual([])
+    expect(value?.groups?.map(group => group.id)).toContain('browser')
+    expect(value?.instruction).toContain('English')
+
+    // 兜底清单不等于放行:零命中不发现任何工具,dispatch 仍被拦。
+    expect(value?.discoveredTools).toEqual([])
+    expect((await execute(ctx, agent, 'tool_dispatch', { name: 'browser_open', arguments: {} }, 'miss-dispatch')).isError).toBe(true)
+  })
   it('uses a minimal byte-stable surface on the first assembly and dispatches discovered tools', async () => {
     const { agent, ctx } = await setup()
     const policyNames: string[] = []

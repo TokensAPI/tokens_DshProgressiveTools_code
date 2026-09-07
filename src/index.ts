@@ -752,7 +752,10 @@ export function apply(ctx: Context, input: Config): void {
       action,
       query,
       matches,
-      ...(action === 'status' ? { groups: deferredGroupSummaries(state) } : {}),
+      // 零命中若只回空数组,模型会把"搜不到"读成"没有这个能力"。附上家族
+      // 清单给它一条恢复路径。matches 为空时不产生任何 discovery,所以这
+      // 不放宽 dispatch 门禁。
+      ...(action === 'status' || matches.length === 0 ? { groups: deferredGroupSummaries(state) } : {}),
       stableTools: [...state.stableNames ?? []].sort(),
       discoveredTools: [...newlyDiscovered].sort(),
       discoveredCount: allDiscovered.size,
@@ -761,9 +764,11 @@ export function apply(ctx: Context, input: Config): void {
       estimatedVisibleTokens,
       estimatedCatalogTokens: state.progressive.catalog.totalEstimatedTokens,
       estimatedSavedTokens: state.progressive.catalog.totalEstimatedTokens,
-      instruction: action === 'search'
-        ? `Call ${config.dispatchToolName} with an exact returned name and arguments matching its parameters schema.`
-        : `Use ${config.toolName} with a task-oriented query to load exact deferred definitions.`,
+      instruction: action === 'status'
+        ? `Use ${config.toolName} with a task-oriented query to load exact deferred definitions.`
+        : matches.length === 0
+          ? `No tool matched ${JSON.stringify(query)}. Definitions are indexed in English: retry ${config.toolName} with English keywords, or pick a family from groups and search that family name.`
+          : `Call ${config.dispatchToolName} with an exact returned name and arguments matching its parameters schema.`,
     }
   }
 
@@ -774,7 +779,8 @@ export function apply(ctx: Context, input: Config): void {
       parameters: {
         query: {
           type: 'string',
-          description: 'Task-oriented capability query. Include the object, action, or service involved.',
+          description: 'Task-oriented capability query in English. Include the object, action, or service involved.'
+            + ' Tool definitions are indexed in English, so translate a non-English request into English keywords before searching.',
         },
         action: {
           type: 'string',
