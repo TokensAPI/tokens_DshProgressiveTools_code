@@ -11,6 +11,7 @@ import z from '@deepseek-ai/schemastery'
 import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
 import { HarnessError } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
+import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import { defineTool, renderToolsSdk, renderToolsSdkPy } from '@deepseek-ai/dsh-tools'
 import type {
   InferValue,
@@ -386,6 +387,14 @@ function eventTurn(event: unknown): number {
   return event.data.turn as number
 }
 
+function sessionEvents(agent: Agent): readonly SessionEvent[] {
+  const session = agent.session as unknown as {
+    readonly events?: readonly SessionEvent[]
+    snapshotEvents?: () => readonly SessionEvent[]
+  }
+  return session.snapshotEvents?.() ?? session.events ?? []
+}
+
 function cloneSchemas(
   value: readonly { name: string; description: string; parameters: Record<string, unknown> }[],
 ): ToolSchemaView[] {
@@ -527,7 +536,7 @@ export function apply(ctx: Context, input: Config): void {
     if (dispose !== undefined) mutateRestriction(dispose)
   }
 
-  const latestTurn = (agent: Agent): number => agent.session.events.reduce(
+  const latestTurn = (agent: Agent): number => sessionEvents(agent).reduce(
     (maximum, event) => Math.max(maximum, eventTurn(event)),
     0,
   )
@@ -571,7 +580,7 @@ export function apply(ctx: Context, input: Config): void {
 
   const restoreFromEvents = (state: AgentState): void => {
     const calls = new Map<string, LoggedCall>()
-    for (const event of state.agent.session.events) {
+    for (const event of sessionEvents(state.agent)) {
       state.progressive.currentTurn = Math.max(state.progressive.currentTurn, eventTurn(event))
       if (event.type === 'tool/call') {
         calls.set(String(event.data.callId), {

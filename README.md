@@ -1,7 +1,7 @@
 # Tokens Progressive Tools
 
 [![CI](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/ci.yml/badge.svg)](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/ci.yml)
-[![version](https://img.shields.io/badge/version-0.1.3-blue.svg)](./CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.1.4-blue.svg)](./CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 TokensCowork's cache-stable progressive tool discovery for DeepSeek Harness. The default mode

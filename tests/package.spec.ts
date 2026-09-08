@@ -15,11 +15,12 @@ describe('Tokens package contract', () => {
     const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
 
     expect(manifest.name).toBe('@tokensapi/dsh-progressive-tools')
-    expect(manifest.version).toBe('0.1.3')
+    expect(manifest.version).toBe('0.1.4')
     expect(manifest.peerDependencies).toMatchObject({
       '@deepseek-ai/cordis': '4.0.1 || 4.0.2',
       '@deepseek-ai/dsh-agent': '0.1.0-rc.8 || 0.1.3-alpha.1',
       '@deepseek-ai/dsh-llm': '0.1.0-rc.8 || 0.1.3-alpha.1',
+      '@deepseek-ai/dsh-session': '0.1.0-rc.8 || 0.1.3-alpha.1',
       '@deepseek-ai/dsh-system-prompt': '0.1.0-rc.8 || 0.1.3-alpha.1',
       '@deepseek-ai/dsh-tools': '0.1.0-rc.8 || 0.1.3-alpha.1',
     })

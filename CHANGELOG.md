@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.1.4] - 2026-09-08
+
+### Fixed
+
+- Read session history through the `snapshotEvents()` API used by desktop
+  0.4.3 while retaining the legacy `events` fallback, preventing first-turn
+  failures during progressive state initialization and replay restoration.
+
 ## [Tokens 0.1.3] - 2026-09-08
 
 ### Fixed

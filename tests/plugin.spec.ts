@@ -84,6 +84,18 @@ async function execute(ctx: Context, agent: Agent, name: string, argumentsValue:
 }
 
 describe('progressive tools plugin', () => {
+  it('supports sessions that expose snapshotEvents instead of events', async () => {
+    const source = Session.create(SessionId('snapshot-only'))
+    source.append('turn/start', { turn: 1 })
+    const session = {
+      id: source.id,
+      snapshotEvents: () => source.events,
+    } as unknown as Session
+    const { agent, ctx } = await setup(session)
+
+    await expect(assemble(ctx, agent)).resolves.toBeDefined()
+  })
+
   it('answers an unmatched search with the family list instead of an empty result', async () => {
     const { agent, ctx } = await setup()
     await assemble(ctx, agent)
