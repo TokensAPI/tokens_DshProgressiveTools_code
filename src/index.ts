@@ -9,7 +9,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
-import { CallId, HarnessError } from '@deepseek-ai/dsh-llm'
+import { HarnessError } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import { defineTool, renderToolsSdk, renderToolsSdkPy } from '@deepseek-ai/dsh-tools'
 import type {
@@ -878,7 +878,7 @@ export function apply(ctx: Context, input: Config): void {
         try {
           const nested = await exec.agent.ctx.tools.execute({
             signal: exec.signal,
-            callId: CallId(`${String(exec.callId)}:dispatch`),
+            callId: `${String(exec.callId)}:dispatch` as typeof exec.callId,
             rootCallId: exec.rootCallId,
             parent: exec.token,
             name: args.name,

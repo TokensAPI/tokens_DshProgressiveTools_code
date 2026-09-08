@@ -1,7 +1,7 @@
 # Tokens Progressive Tools
 
 [![CI](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/ci.yml/badge.svg)](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/ci.yml)
-[![version](https://img.shields.io/badge/version-0.1.0-blue.svg)](./CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.1.3-blue.svg)](./CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 TokensCowork's cache-stable progressive tool discovery for DeepSeek Harness. The default mode
@@ -68,7 +68,9 @@ and cancellation still run for the selected real tool.
 ## Requirements
 
 - Node.js `^22.19.0` or `>=24.0.0`
-- DeepSeek Harness `0.1.0-rc.8`
+- Cordis `4.0.1` or `4.0.2`
+- DeepSeek Harness `0.1.0-rc.8`, or the `0.1.3-alpha.1` runtime bundled by
+  desktop `0.4.3`
 - pnpm for source installation and development
 
 ## Install

@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.1.3] - 2026-09-08
+
+### Fixed
+
+- Removed the legacy `CallId` runtime import so the plugin loads with the
+  renamed tool-call identifier exported by the desktop 0.4.3 runtime.
+- Declared peer compatibility with both the public DSH `0.1.0-rc.8` packages
+  and the DSH `0.1.3-alpha.1` runtime bundled by desktop 0.4.3.
+
 ## [Tokens 0.1.2] - 2026-09-07
 
 ### Fixed
