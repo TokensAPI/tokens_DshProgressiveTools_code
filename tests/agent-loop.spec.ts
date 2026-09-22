@@ -34,7 +34,7 @@ function oneStopResponse(): AsyncIterable<StreamChunk> {
 }
 
 describe('AgentLoop request integration', () => {
-  it('sends a minimal first request and preserves the exact tool prefix after discovery', async () => {
+  it.each(['stable-proxy', 'native'] as const)('sends minimal requests and correctly projects discovery in %s mode', async (mode) => {
     const ctx = new Context()
     await ctx.plugin(SystemPrompt, {})
     await ctx.plugin(ToolRuntime)
@@ -45,6 +45,7 @@ describe('AgentLoop request integration', () => {
       ctx.tools.register(fixtureTool(name))
     }
     await ctx.plugin(ProgressiveTools, {
+      mode,
       groups: [
         { id: 'browser', include: ['browser_*'], description: 'Browser tools' },
         { id: 'database', include: ['db_*'], description: 'Database tools' },
@@ -72,7 +73,7 @@ describe('AgentLoop request integration', () => {
     expect(requests[0]?.tools?.map(tool => tool.name).sort()).toEqual([
       'ask_user_question',
       'skill',
-      'tool_dispatch',
+      ...(mode === 'stable-proxy' ? ['tool_dispatch'] : []),
       'tool_search',
     ])
 
@@ -92,8 +93,16 @@ describe('AgentLoop request integration', () => {
     await agent.whenIdle()
 
     expect(requests).toHaveLength(2)
-    expect(requests[1]?.tools).toEqual(requests[0]?.tools)
-    expect(requests[1]?.system).toBe(requests[0]?.system)
+    if (mode === 'stable-proxy') {
+      expect(requests[1]?.tools).toEqual(requests[0]?.tools)
+      expect(requests[1]?.system).toBe(requests[0]?.system)
+    } else {
+      expect(requests[1]?.tools?.map(tool => tool.name).sort()).toEqual([
+        'ask_user_question', 'browser_click', 'browser_open', 'skill', 'tool_search',
+      ])
+      const direct = await ctx.tools.execute({ signal, callId: CallId('native-direct'), name: 'browser_open', arguments: {}, agent })
+      expect(direct).toMatchObject({ isError: false, content: [{ type: 'text', text: 'ran:browser_open' }] })
+    }
 
     // A status listing and the family-wide discovery it precedes must not
     // write back into the stable prefix either.
@@ -113,7 +122,7 @@ describe('AgentLoop request integration', () => {
     await agent.whenIdle()
 
     expect(requests).toHaveLength(3)
-    expect(requests[2]?.tools).toEqual(requests[0]?.tools)
-    expect(requests[2]?.system).toBe(requests[0]?.system)
+    expect(requests[2]?.tools).toEqual(requests[1]?.tools)
+    expect(requests[2]?.system).toBe(requests[1]?.system)
   })
 })

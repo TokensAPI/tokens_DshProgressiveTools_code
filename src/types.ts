@@ -17,7 +17,7 @@ export interface SkillBindingConfig {
   readonly groups: readonly string[]
 }
 
-export type ProgressiveMode = 'stable-proxy' | 'dynamic'
+export type ProgressiveMode = 'native' | 'stable-proxy' | 'dynamic'
 
 export interface ResolvedConfig {
   readonly mode: ProgressiveMode

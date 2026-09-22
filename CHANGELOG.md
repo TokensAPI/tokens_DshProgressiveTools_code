@@ -6,6 +6,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.2.0] - 2026-09-08
+
+### Changed
+
+- Default to exact native tool loading instead of proxy execution. Explicit
+  stable-proxy and dynamic configurations retain their previous behavior.
+- Preserve loaded native definitions and guidance for the session without
+  automatic eviction. Existing proxy histories require rediscovery after switching.
+
+### Added
+
+- Paginated discovery and browse, exact-name loading, and a bounded capability directory.
+- Native execution contract tests, a compiled-package host-runtime smoke test,
+  and synthetic full/proxy/native model evaluations with provider token accounting.
+- See `docs/evaluation.md` for measured results and limits; no general model
+  capability improvement or cache-cost saving is assumed from schema reduction.
+
 ## [Tokens 0.1.4] - 2026-09-08
 
 ### Fixed

@@ -5,8 +5,9 @@ should also read [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Project overview
 
-`dsh-progressive-tools` is a DeepSeek Harness (DSH) plugin that provides
-cache-stable progressive tool discovery. The default `stable-proxy` mode keeps
+`dsh-progressive-tools` provides native progressive tool discovery by default.
+`src/native.ts` loads exact definitions for native calls and retains them for
+the session. The optional `stable-proxy` mode keeps
 a small byte-stable tool surface (`tool_search`, `tool_dispatch`, and a few
 always-visible tools) on every request, holds the complete tool catalog in
 process memory, and executes discovered tools through the ordinary DSH
@@ -39,17 +40,21 @@ pnpm run check        # typecheck + lint + test + build + publint (run before fi
 
 ## Invariants that must not break
 
-1. The first AgentLoop request already carries the small stable surface.
-2. Discovery never changes the top-level tool list, system text, or generated
+1. The first request carries common tools and discovery, not the full catalog.
+2. In explicit stable-proxy mode, discovery never changes the tool list, system text, or generated
    Code Mode SDK for an unchanged composition. The AgentLoop integration test
    asserts byte-level prefix equality; keep it passing.
-3. Deferred tools execute through the full DSH pipeline (`ctx.tools.execute`
+3. In stable-proxy mode, deferred tools execute through the full pipeline (`ctx.tools.execute`
    with the dispatcher token as parent), so approval, guards, validation,
    timeouts, and result policy still apply.
 4. Direct calls to deferred names stay denied by the monotonic guard. Any new
    deferred path must be covered by the guard and by an end-to-end test.
 5. All runtime behavior uses public DSH services and events. Per-agent state
    stays isolated and every effect is reversible for unload and reload.
+6. Native mode loads full definitions and guidance before direct calls, keeps
+   host execution and presentation intact, and does not implicitly load siblings.
+7. Do not claim model quality or billing improvement from character estimates
+   or deterministic fixtures. Report live evaluation limits and cache effects.
 
 ## Conventions
 

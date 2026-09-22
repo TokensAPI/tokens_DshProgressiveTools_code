@@ -1,8 +1,33 @@
 # Architecture
 
-## Goals and invariants
+## Native discovery (default)
 
-The default architecture has four invariants:
+`src/native.ts` separates discovery from execution. A scoped loaded-name set
+filters only the model-facing assembly and generated SDK. The original registry
+remains intact, so validation, approval, cancellation, presentation metadata,
+content finalization, deferred contexts and completion markers stay host-owned.
+
+Search exposes selected exact tools on the next request. Full definitions are
+not repeated in search text, and siblings do not activate implicitly. Exact
+tool guidance follows definition visibility; unrelated guidance is untouched.
+Loaded native tools may compose internally. The generic code transport cannot
+use its parent token to bypass discovery of an unloaded target.
+
+Successful authoritative search results commit loaded names. Native discovery
+is scheduled exclusively so cumulative presentation snapshots do not race;
+business tools keep their own concurrency declarations. Session restoration
+supports legacy event arrays and snapshot APIs, cumulative result metadata and
+nested code-dispatch increments. Native state does not replay legacy proxy grants.
+There is no implicit eviction; new sessions reset the loaded set. Large, long
+sessions may lose token savings, and changing schemas can reduce cache reuse.
+
+The directory and schema index come from the scoped host registry, with configured
+group descriptions, aliases and skill bindings as optional metadata. No renderer
+names or plugin-specific bypass lists appear in the native implementation.
+
+## Stable-proxy goals and invariants
+
+The explicit stable-proxy architecture has four invariants:
 
 1. The first AgentLoop request already carries the small surface.
 2. Discovery never changes the top-level tool list or generated SDK.

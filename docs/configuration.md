@@ -8,7 +8,7 @@ fail loudly.
 
 | Option | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `mode` | `stable-proxy` \| `dynamic` | `stable-proxy` | Cache-stable dispatch or changing native family activation. |
+| `mode` | `native` \| `stable-proxy` \| `dynamic` | `native` | Exact native loading, fixed proxy dispatch, or expiring native families. |
 | `toolName` | string | `tool_search` | Discovery tool name. |
 | `dispatchToolName` | string | `tool_dispatch` | Stable dispatcher name. Must differ from `toolName`. |
 | `alwaysVisible` | string[] | essential direct tools | Exact names or `*` patterns kept on the fixed direct surface. |
@@ -28,7 +28,25 @@ fail loudly.
 still validated in stable mode so switching modes cannot reveal a latent bad
 configuration.
 
-## Stable direct tools
+## Native mode
+
+Native mode registers only `toolName`, not a dispatcher. Search returns compact
+descriptions and loads the selected complete definitions into the next request.
+`status` lists tools without loading them; `offset` and `nextOffset` paginate
+both search and status using `maxResults` as the maximum page size.
+`load` accepts `names` (1-32 exact names), independently of search rank.
+Loaded tools are retained for the session and restored from native search records.
+Registry reconnects preserve loaded names, but external scope restrictions remain authoritative.
+
+`dispatchToolName`, `requireDiscovery`, `statusGrantsDiscovery`, activation limits,
+schema budgets and `retentionTurns` do not control native loading. Common-tool
+patterns are evaluated against the current registry. Explicit skill bindings
+load their members; automatic name-prefix grouping is only a search aid.
+The initial capability directory is limited to 24 groups, with full pagination
+available through status. Lexical search does not translate arbitrary languages;
+provide localized descriptions or aliases, or use browse and exact loading.
+
+## Stable-proxy direct tools
 
 The default patterns are:
 

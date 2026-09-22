@@ -1,6 +1,6 @@
 import type { SkillBindingConfig, ToolGroupConfig } from './types.js'
 
-export const DEFAULT_MODE = 'stable-proxy' as const
+export const DEFAULT_MODE = 'native' as const
 export const DEFAULT_TOOL_NAME = 'tool_search'
 export const DEFAULT_DISPATCH_TOOL_NAME = 'tool_dispatch'
 export const DEFAULT_MAX_RESULTS = 5

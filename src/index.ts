@@ -1,9 +1,7 @@
 /**
- * Cache-stable progressive disclosure for the DeepSeek Harness tool registry.
- *
- * The default mode keeps one byte-stable model-facing surface and dispatches
- * deferred tools through the ordinary Harness execution pipeline. A legacy
- * dynamic mode remains available for deployments that require native schemas.
+ * Progressive tool discovery with native execution by default.
+ * Explicit compatibility modes retain fixed-surface proxy dispatch and
+ * expiring native family activation.
  */
 
 import type { Context } from '@deepseek-ai/cordis'
@@ -12,6 +10,7 @@ import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
 import { HarnessError } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import { applyNativeDiscovery } from './native.js'
 import { defineTool, renderToolsSdk, renderToolsSdkPy } from '@deepseek-ai/dsh-tools'
 import type {
   InferValue,
@@ -99,7 +98,7 @@ export const name = 'tokens-progressive-tools'
 export const inject = ['tools', 'systemPrompt']
 
 export interface Config {
-  /** Stable proxy is cache-friendly; dynamic exposes changing native families. */
+  /** Native loads exact definitions; compatibility modes retain older behavior. */
   readonly mode?: ProgressiveMode
   /** Registered discovery tool name. */
   readonly toolName?: string
@@ -183,8 +182,8 @@ function integer(value: number, path: string, minimum: number): number {
 
 export function resolveConfig(config: Config = {}): ResolvedConfig {
   const mode = config.mode ?? DEFAULT_MODE
-  if (mode !== 'stable-proxy' && mode !== 'dynamic') {
-    throw new Error('mode must be either "stable-proxy" or "dynamic"')
+  if (mode !== 'native' && mode !== 'stable-proxy' && mode !== 'dynamic') {
+    throw new Error('mode must be "native", "stable-proxy", or "dynamic"')
   }
   const toolName = nonEmpty(config.toolName ?? DEFAULT_TOOL_NAME, 'toolName')
   const dispatchToolName = nonEmpty(
@@ -515,6 +514,7 @@ function exactGuidanceForDeferredTool(sectionName: string, deferredNames: Readon
 
 export function apply(ctx: Context, input: Config): void {
   const config = resolveConfig(input)
+  if (config.mode === 'native') return applyNativeDiscovery(ctx, config)
   const states = new WeakMap<Agent, AgentState>()
   const liveStates = new Set<AgentState>()
   const skillBindings = new Map(config.skillBindings.map(binding => [binding.skill, binding.groups] as const))

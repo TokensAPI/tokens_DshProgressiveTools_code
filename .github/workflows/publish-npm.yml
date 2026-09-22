@@ -1,0 +1,97 @@
+name: Verify and Publish to Private npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing stable tag to publish; leave empty for checks only
+        required: false
+        type: string
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-npm-${{ inputs.release_tag || github.ref }}
+  cancel-in-progress: false
+
+env:
+  NPM_REGISTRY: https://npm.tokensapi.ai/
+
+jobs:
+  check:
+    name: Test, build, and verify package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout selected revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://npm.tokensapi.ai/
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts --registry=https://registry.npmjs.org/
+
+      - name: Run checks
+        run: pnpm run check
+
+      - name: Validate release identity
+        if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/validate-release.mjs "$RELEASE_TAG"
+
+      - name: Refuse fork publishing
+        if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        run: |
+          if [ "$GITHUB_REPOSITORY" != 'TokensAPI/tokens_DshProgressiveTools_code' ]; then
+            echo 'Release publishing is enabled only for the canonical repository; this fork run remains check-only.' >&2
+            exit 1
+          fi
+
+      - name: Pack verified release
+        if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        run: |
+          mkdir -p .release
+          pnpm pack --pack-destination .release --ignore-scripts
+
+      - name: Publish to private npm
+        if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.VERDACCIO_PUBLISH_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo 'Configure the VERDACCIO_PUBLISH_TOKEN repository secret before releasing.' >&2
+            exit 1
+          fi
+          publisher="$(npm whoami --registry="$NPM_REGISTRY")"
+          if [ "$publisher" != 'tokenscowork' ]; then
+            echo 'The registry token does not belong to the approved publisher tokenscowork.' >&2
+            exit 1
+          fi
+          package_name="$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).name")"
+          package_version="$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version")"
+          if npm view "$package_name@$package_version" version --registry="$NPM_REGISTRY" >/dev/null 2>&1; then
+            echo "Refusing to overwrite already published $package_name@$package_version." >&2
+            exit 1
+          fi
+          npm publish .release/*.tgz --ignore-scripts --registry="$NPM_REGISTRY" --tag=latest
+          npm view "$package_name@$package_version" version --registry="$NPM_REGISTRY"

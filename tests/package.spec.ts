@@ -8,14 +8,43 @@ describe('Tokens package contract', () => {
     const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
       name: string
       version: string
+      description: string
+      repository: { type: string; url: string }
+      license: string
+      tokenscowork: {
+        displayName: { 'zh-CN': string; 'en-US': string }
+        summary: { 'zh-CN': string; 'en-US': string }
+      }
       scripts: Record<string, string>
       peerDependencies: Record<string, string>
       dsh: { bundle: { patch: string } }
+      publishConfig: { access: string; registry: string }
     }
     const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
+    const workflow = await readFile(new URL('../.github/workflows/publish-npm.yml', import.meta.url), 'utf8')
 
     expect(manifest.name).toBe('@tokensapi/dsh-progressive-tools')
-    expect(manifest.version).toBe('0.1.4')
+    expect(manifest.version).toBe('0.2.1')
+    expect(manifest.description).toBeTruthy()
+    expect(manifest.repository).toMatchObject({ type: 'git' })
+    expect(manifest.license).toBe('MIT')
+    expect(manifest.publishConfig).toEqual({ access: 'public', registry: 'https://npm.tokensapi.ai/' })
+    expect(workflow).toContain('name: Verify and Publish to Private npm')
+    expect(workflow).toContain('https://npm.tokensapi.ai/')
+    expect(workflow).toContain('VERDACCIO_PUBLISH_TOKEN')
+    expect(workflow).toContain("tags:\n      - 'v*'")
+    expect(workflow).toContain('release_tag')
+    expect(workflow).not.toMatch(/npm publish[^\n]*registry\.npmjs\.org/)
+    expect(manifest.tokenscowork).toEqual({
+      displayName: {
+        'zh-CN': '渐进式工具',
+        'en-US': 'Progressive Tools',
+      },
+      summary: {
+        'zh-CN': '只让高频工具常驻模型上下文，其余工具按需搜索并通过原有 DSH 安全执行链分发。',
+        'en-US': 'Keep frequently used tools in context, discover others on demand, and execute them through the standard DSH safety pipeline.',
+      },
+    })
     expect(manifest.peerDependencies).toMatchObject({
       '@deepseek-ai/cordis': '4.0.1 || 4.0.2',
       '@deepseek-ai/dsh-agent': '0.1.0-rc.8 || 0.1.3-alpha.1',

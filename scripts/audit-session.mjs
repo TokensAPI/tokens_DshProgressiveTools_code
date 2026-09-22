@@ -8,10 +8,16 @@ import * as ProgressiveTools from '../lib/index.js'
 
 const sessionPath = process.argv[2]
 if (sessionPath === undefined) {
-  throw new Error('usage: pnpm audit:session <session.jsonl>')
+  throw new Error('usage: pnpm audit:session <session.jsonl | -> [native | stable-proxy]')
 }
 
-const events = (await readFile(sessionPath, 'utf8'))
+let input
+if (sessionPath === '-') {
+  const chunks = []
+  for await (const chunk of process.stdin) chunks.push(chunk)
+  input = Buffer.concat(chunks).toString('utf8')
+} else input = await readFile(sessionPath, 'utf8')
+const events = input
   .split(/\r?\n/)
   .flatMap((line) => {
     try {
@@ -41,7 +47,8 @@ for (const schema of originalTools) {
     execute: async () => 'audit fixture',
   })
 }
-await ctx.plugin(ProgressiveTools, {})
+const mode = process.argv[3] ?? 'native'
+await ctx.plugin(ProgressiveTools, { mode })
 
 const session = Session.create(SessionId('tokens-progressive-tools-audit'))
 const agent = {}
@@ -58,15 +65,17 @@ const assembled = await ctx.systemPrompt.assemble({
 })
 const estimateTokens = value => Math.ceil(JSON.stringify(value).length / 4)
 const originalEstimatedTokens = estimateTokens(originalTools)
-const stableEstimatedTokens = estimateTokens(assembled.tools)
+const projectedEstimatedTokens = estimateTokens(assembled.tools)
 
 process.stdout.write(`${JSON.stringify({
+  mode,
+  estimateOnly: 'Schema characters / 4; excludes model tokenizer, system, history, and cache pricing',
   originalToolCount: originalTools.length,
-  stableToolCount: assembled.tools.length,
-  stableTools: assembled.tools.map(tool => tool.name).sort(),
+  projectedToolCount: assembled.tools.length,
+  projectedTools: assembled.tools.map(tool => tool.name).sort(),
   originalEstimatedTokens,
-  stableEstimatedTokens,
+  projectedEstimatedTokens,
   reductionPercent: Number((
-    (1 - stableEstimatedTokens / originalEstimatedTokens) * 100
+    (1 - projectedEstimatedTokens / originalEstimatedTokens) * 100
   ).toFixed(1)),
 }, undefined, 2)}\n`)

@@ -36,6 +36,7 @@ async function setup(
     ctx.tools.register(tool(name))
   }
   const plugin = ctx.plugin(ProgressiveTools, {
+    mode: 'stable-proxy',
     groups: [
       { id: 'browser', include: ['browser_*'], description: 'Browser tools' },
       { id: 'database', include: ['db_*'], description: 'Database tools' },

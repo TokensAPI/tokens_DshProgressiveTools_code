@@ -1,17 +1,46 @@
 # Tokens Progressive Tools
 
 [![CI](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/ci.yml/badge.svg)](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/ci.yml)
-[![version](https://img.shields.io/badge/version-0.1.4-blue.svg)](./CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.2.0-blue.svg)](./CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
-TokensCowork's cache-stable progressive tool discovery for DeepSeek Harness. The default mode
-sends a small, fixed tool surface on the first request, keeps the complete
-catalog in process memory, and executes discovered tools through the ordinary
-Harness pipeline.
+Progressive tool discovery with native execution. The default `native` mode
+initially sends common tools and a bounded capability directory. Search loads
+exact definitions for direct calls through the host's unchanged execution pipeline.
 
 [中文文档](./README.zh-CN.md)
 
-## Why
+## Native discovery (default)
+
+```text
+capability directory -> tool_search -> full native definitions -> direct tool call
+```
+
+- `search` ranks names, descriptions, schema text and configured multilingual aliases.
+- `status` browses every tool with `offset` / `nextOffset`; it does not activate tools.
+- `load` accepts up to 32 exact `names`, providing a recovery path beyond search ranking.
+- Only selected tools activate, not unnamed siblings. Full schemas appear in the next
+  request's tools field, not duplicated in the search response.
+- Loaded definitions and exact `tool:<name>` guidance stay available for the session.
+  There is no automatic family, token-budget or turn-based eviction in native mode.
+- Original tool identity, presentation, content, policy and concurrency remain host-owned.
+  The code SDK uses the same loaded names; loaded tools may compose internally.
+- Unknown guidance remains intact. Plugin authors can supply group descriptions,
+  multilingual aliases and explicit skill-to-family bindings; no plugin-specific whitelist is required.
+
+For an existing installation explicitly configured with `mode: stable-proxy`, change
+it to `mode: native`. Omitted mode now selects native. Existing legacy discovery
+records are not migrated; search again when continuing an older proxy conversation.
+New native discovery records restore across session resumes.
+
+Native loading changes the tool prefix and can reduce cache hits. It does not
+implement a provider-native deferred-reference protocol. Sparse tasks save schema
+tokens; long sessions that eventually load everything may not. Run `pnpm eval:offline`
+for deterministic transport checks and `pnpm eval:live` with `EVAL_BASE_URL`,
+`EVAL_MODEL`, `EVAL_API_KEY` for synthetic live-model comparisons. Neither test
+executes real business tools. See [evaluation](docs/evaluation.md) for methodology.
+
+## Stable-proxy compatibility
 
 Every visible tool definition consumes input tokens on every request. Changing
 that definition list later also changes the request prefix and reduces context
@@ -20,7 +49,7 @@ cache reuse. Progressive disclosure needs both properties at once:
 - a small first request;
 - a byte-stable tool and system prefix across later requests.
 
-The default `stable-proxy` mode provides that contract:
+The optional `stable-proxy` mode provides that contract:
 
 ```text
 complete registry (process memory)
@@ -41,7 +70,7 @@ Search changes conversation history, not the top-level tool list. Approval,
 guards, argument validation, timeout wrappers, result policy, deferred context,
 and cancellation still run for the selected real tool.
 
-## Features
+## Compatibility-mode features
 
 - Minimal tool definitions on the actual first AgentLoop request.
 - Byte-stable native tool list and Code Mode SDK across discovery calls.
@@ -96,9 +125,9 @@ dsh --profile web --dump-config
 
 The dump should contain the `tokens-progressive-tools` row contributed by this bundle.
 
-## Use
+## Stable-proxy usage
 
-The default direct surface contains:
+The stable-proxy direct surface contains:
 
 - `tool_search`;
 - `tool_dispatch`;
