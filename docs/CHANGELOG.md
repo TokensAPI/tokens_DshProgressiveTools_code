@@ -6,6 +6,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.2.2] - 2026-09-23
+
+### Changed
+
+- Documentation collected under `docs/`, with the Chinese README as the root default.
+- Release automation split into `checks.yml` for branches and pull requests and
+  `publish-npm.yml` for `v*` tags. Pushing a tag is the only publish path, and it
+  gates on the full check matrix.
+
+### Fixed
+
+- The packing step passed `pnpm pack --ignore-scripts`, which pnpm rejects as an
+  unknown option, so a tag release would have failed before publishing anything.
+- A registry error while probing for an already published version no longer reads
+  as "this version is not published yet"; the release aborts instead.
+
 ## [Tokens 0.2.0] - 2026-09-08
 
 ### Changed
@@ -170,7 +186,8 @@ prefix is byte-stable again from the second request onward.
 - Bundle manifest, GitHub source-install build path, documentation, tests, and
   continuous integration.
 
-[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.2...HEAD
+[Tokens 0.2.2]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.2
 [Tokens 0.1.0]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.1.0
 [0.3.0]: https://github.com/everclear077/dsh-progressive-tools/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/everclear077/dsh-progressive-tools/compare/v0.1.0...v0.2.0

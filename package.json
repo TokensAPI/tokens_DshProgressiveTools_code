@@ -1,6 +1,6 @@
 {
   "name": "@tokensapi/dsh-progressive-tools",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Progressive tool discovery with native execution and optional stable proxy transport",
   "tokenscowork": {
     "displayName": {

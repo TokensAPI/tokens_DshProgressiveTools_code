@@ -29,7 +29,7 @@ describe('Tokens package contract', () => {
     const release = await readFile(new URL('../.github/workflows/publish-npm.yml', import.meta.url), 'utf8')
 
     expect(manifest.name).toBe('@tokensapi/dsh-progressive-tools')
-    expect(manifest.version).toBe('0.2.1')
+    expect(manifest.version).toBe('0.2.2')
     expect(manifest.description).toBeTruthy()
     expect(manifest.repository).toMatchObject({ type: 'git' })
     expect(manifest.license).toBe('MIT')
