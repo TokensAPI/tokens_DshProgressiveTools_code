@@ -22,6 +22,22 @@ All notable changes to this project are documented here. The format follows
 - A registry error while probing for an already published version no longer reads
   as "this version is not published yet"; the release aborts instead.
 
+## [Tokens 0.2.1] - 2026-09-22
+
+### Added
+
+- Bilingual TokensCowork marketplace metadata, so the display name and summary
+  render in Simplified Chinese and English.
+- A private npm release workflow gated on a `v*` tag. It runs the full check
+  suite before packing, validates the release with `scripts/validate-release.mjs`
+  (the tag has to match the package version and the remote has to be this
+  repository), and refuses to overwrite a version that is already published.
+
+### Changed
+
+- `publishConfig` points at the private registry `https://npm.tokensapi.ai/`
+  instead of the public one.
+
 ## [Tokens 0.2.0] - 2026-09-08
 
 ### Changed
@@ -188,6 +204,8 @@ prefix is byte-stable again from the second request onward.
 
 [Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.2...HEAD
 [Tokens 0.2.2]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.2
+[Tokens 0.2.1]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.1
+[Tokens 0.2.0]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.0
 [Tokens 0.1.0]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.1.0
 [0.3.0]: https://github.com/everclear077/dsh-progressive-tools/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/everclear077/dsh-progressive-tools/compare/v0.1.0...v0.2.0
