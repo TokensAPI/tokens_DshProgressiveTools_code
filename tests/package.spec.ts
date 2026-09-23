@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_ALWAYS_VISIBLE } from '../src/defaults.js'
 import { name } from '../src/index.js'
 
+const NPMJS_PUBLISH = /npm publish .*registry\.npmjs\.org/
+const PACK_IGNORE_SCRIPTS = /pnpm pack .*--ignore-scripts/
+
 describe('Tokens package contract', () => {
   it('keeps package, loader patch, and plugin identities aligned', async () => {
     const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
@@ -22,7 +25,8 @@ describe('Tokens package contract', () => {
       engines: { node: string }
     }
     const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
-    const workflow = await readFile(new URL('../.github/workflows/ci-and-release.yml', import.meta.url), 'utf8')
+    const checks = await readFile(new URL('../.github/workflows/checks.yml', import.meta.url), 'utf8')
+    const release = await readFile(new URL('../.github/workflows/publish-npm.yml', import.meta.url), 'utf8')
 
     expect(manifest.name).toBe('@tokensapi/dsh-progressive-tools')
     expect(manifest.version).toBe('0.2.1')
@@ -30,26 +34,33 @@ describe('Tokens package contract', () => {
     expect(manifest.repository).toMatchObject({ type: 'git' })
     expect(manifest.license).toBe('MIT')
     expect(manifest.publishConfig).toEqual({ access: 'public', registry: 'https://npm.tokensapi.ai/' })
-    expect(workflow).toContain('name: CI and Release')
-    expect(workflow).toContain('https://npm.tokensapi.ai/')
-    expect(workflow).toContain('VERDACCIO_PUBLISH_TOKEN')
-    expect(workflow).not.toMatch(/npm publish[^\n]*registry\.npmjs\.org/)
-    // Checks cover the whole engines range, and a tag ships only once every
-    // version in it has passed.
+    expect(checks).toContain('name: Checks')
+    expect(release).toContain('name: Publish to private npm')
+    expect(release).toContain('https://npm.tokensapi.ai/')
+    expect(release).toContain('VERDACCIO_PUBLISH_TOKEN')
+    expect(release).not.toMatch(NPMJS_PUBLISH)
+    // Both workflows cover the whole engines range. needs cannot span
+    // workflows, so the release gates on a matrix it runs itself.
     expect(manifest.engines.node).toBe('^22.19.0 || >=24.0.0')
-    expect(workflow).toContain('node: [22.19.0, 24]')
-    expect(workflow).toContain('needs: check')
-    // Tag pushes are the only release path; a manual dispatch would take a
-    // different concurrency key and could publish the same version in parallel.
-    expect(workflow).not.toContain('workflow_dispatch')
-    expect(workflow).toContain("if: startsWith(github.ref, 'refs/tags/v')")
+    expect(checks).toContain('node: [22.19.0, 24]')
+    expect(release).toContain('node: [22.19.0, 24]')
+    expect(release).toContain('needs: check')
+    // Disjoint triggers: checks skip tags, the release runs on nothing else.
+    // Without that split a tag would run both, and the release could publish
+    // while the other workflow was still checking.
+    expect(checks).toContain("branches: ['**']")
+    expect(release).toContain("tags: ['v*']")
+    expect(release).toContain("if: startsWith(github.ref, 'refs/tags/v')")
+    // A manual entry would take a different concurrency key and could publish
+    // the same version in parallel.
+    expect(release).not.toContain('workflow_dispatch')
     // An unreachable or unauthorized registry must abort instead of reading as
     // "version not published yet".
-    expect(workflow).toContain('*E404*')
-    expect(workflow).toContain('Cannot confirm that')
+    expect(release).toContain('*E404*')
+    expect(release).toContain('Cannot confirm that')
     // pnpm pack rejects --ignore-scripts as an unknown option, which would
     // abort the release before anything is published.
-    expect(workflow).not.toMatch(/pnpm pack .*--ignore-scripts/)
+    expect(release).not.toMatch(PACK_IGNORE_SCRIPTS)
     expect(manifest.tokenscowork).toEqual({
       displayName: {
         'zh-CN': '渐进式工具',

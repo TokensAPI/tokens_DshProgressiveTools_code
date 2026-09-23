@@ -1,6 +1,6 @@
 # Tokens Progressive Tools
 
-[![CI](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/ci-and-release.yml/badge.svg)](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/ci-and-release.yml)
+[![CI](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/checks.yml/badge.svg)](https://github.com/TokensAPI/tokens_DshProgressiveTools_code/actions/workflows/checks.yml)
 [![version](https://img.shields.io/badge/version-0.2.1-blue.svg)](./CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](../LICENSE)
 
@@ -16,7 +16,8 @@ exact definitions for direct calls through the host's unchanged execution pipeli
 - `scripts/`: session audit, reproducible evaluation, runtime smoke checks, release validation.
 - `docs/`: [architecture](./architecture.md), [configuration](./configuration.md),
   [evaluation evidence](./evaluation.md), [publishing](./publishing.md).
-- `.github/workflows/ci-and-release.yml`: multi-version Node checks, then a tag-gated private registry release.
+- `.github/workflows/checks.yml`: multi-version Node checks on branches and pull requests.
+- `.github/workflows/publish-npm.yml`: tag-gated release to the private registry.
 - `lib/` and `node_modules/`: generated build output and installed dependencies.
   `.validation/` is disposable local test output, recreated by evaluation scripts.
 

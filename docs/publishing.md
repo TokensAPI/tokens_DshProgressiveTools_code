@@ -16,11 +16,17 @@ package version already exists in the private registry.
 
 ## Release flow
 
-`ci-and-release.yml` runs the checks on every supported Node version for any push or pull
-request. Publishing is a separate job in the same workflow: it waits for all of
-those checks, then runs only for a tag starting with `v`. A stable tag must
-exactly match the package version, for example `v0.2.2` for `0.2.2`. Prerelease
-tags are rejected.
+`checks.yml` runs the checks on every supported Node version for any branch push
+or pull request. It ignores tags.
+
+`publish-npm.yml` runs only for a tag starting with `v`. It begins with the same
+check matrix and the publish job waits on it, so a release ships only after every
+supported Node version has passed. That matrix is not a duplicate of `checks.yml`:
+`needs:` cannot span workflows, so a release has to gate on checks it runs itself.
+Because the two triggers are disjoint, nothing runs twice.
+
+A stable tag must exactly match the package version, for example `v0.2.2` for
+`0.2.2`. Prerelease tags are rejected.
 
 Tags are the only release path; there is no manual trigger. To retry a failed
 release, re-run the workflow for that tag from the Actions page.

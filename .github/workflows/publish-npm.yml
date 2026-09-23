@@ -1,30 +1,25 @@
-# What this workflow does
+# Publishes the package to the private registry at npm.tokensapi.ai.
 #
-#   check    Runs `pnpm run check` (typecheck, lint, test, build, publint) on
-#            every Node version the package claims to support. Triggered by any
-#            push or pull request, so a broken commit is visible immediately.
-#
-#   publish  Packs the built package and publishes it to the private registry at
-#            npm.tokensapi.ai. Runs only when a `v*` tag is pushed, and only
-#            after every `check` matrix job has passed.
-#
-# There is no manual trigger: pushing a tag is the one and only release path, so
-# a version can never be published twice in parallel. To retry a failed release,
+# Pushing a `v*` tag is the only release path: there is no manual trigger, so a
+# version can never be published twice in parallel. To retry a failed release,
 # re-run this workflow from the Actions tab.
-name: CI and Release
+#
+# The check job here is deliberate, not a duplicate of checks.yml. `needs:`
+# cannot span workflows, so a release gates on checks it runs itself. checks.yml
+# ignores tags, so nothing runs twice.
+name: Publish to private npm
 
 on:
   push:
-  pull_request:
+    tags: ['v*']
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Superseded branch runs are pointless, but a tag run must never be cancelled
-  # halfway through publishing.
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  # A release must never be cancelled halfway through publishing.
+  cancel-in-progress: false
 
 env:
   NPM_REGISTRY: https://npm.tokensapi.ai/
@@ -64,6 +59,8 @@ jobs:
     name: Publish to private npm
     # Every supported Node version must pass before a tag can ship.
     needs: check
+    # The tag trigger already guarantees this; kept so a stray trigger cannot
+    # reach the publish step.
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
