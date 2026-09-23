@@ -1,5 +1,20 @@
 # Architecture
 
+## Discovery boundaries
+
+The host's Skills subsystem loads instructions and referenced resources on demand.
+This plugin controls model-visible tool definitions; it does not replace Skills
+or unload the registered executors. Optional skill bindings connect these paths.
+
+Native discovery loads full definitions into subsequent requests and preserves
+original execution identities. Stable-proxy instead keeps the request tool prefix
+fixed and returns definitions in discovery history before proxy execution.
+Neither mode implements a provider-native deferred-reference protocol. Native
+loading may reduce cache reuse; stable prefixes trade off native presentation.
+
+See the [Skills specification](https://agentskills.io/specification) for the
+separate metadata, instructions, and resource disclosure layers.
+
 ## Native discovery (default)
 
 `src/native.ts` separates discovery from execution. A scoped loaded-name set

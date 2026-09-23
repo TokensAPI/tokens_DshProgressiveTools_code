@@ -27,12 +27,7 @@
     "cordis.patch.yml",
     "docs/**/*.md",
     "README.md",
-    "README.zh-CN.md",
-    "CHANGELOG.md",
-    "CONTRIBUTING.md",
-    "SECURITY.md",
-    "LICENSE",
-    "THIRD_PARTY_NOTICES.md"
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

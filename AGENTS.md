@@ -1,7 +1,7 @@
 # Agent instructions
 
 Guidance for coding agents working in this repository. Human contributors
-should also read [CONTRIBUTING.md](./CONTRIBUTING.md).
+should also read [CONTRIBUTING.md](./docs/CONTRIBUTING.md).
 
 ## Project overview
 
@@ -60,8 +60,8 @@ pnpm run check        # typecheck + lint + test + build + publint (run before fi
 
 - Conventional Commit subjects; keep commits focused.
 - Add or update tests for behavior changes, including resume and unload paths.
-- When public behavior changes, update `README.md`, `README.zh-CN.md`,
-  `docs/configuration.md`, `docs/architecture.md`, and `CHANGELOG.md` in the
+- When public behavior changes, update `README.md`, `docs/README.en-US.md`,
+  `docs/configuration.md`, `docs/architecture.md`, and `docs/CHANGELOG.md` in the
   same change. Keep both README languages in sync.
 - Comments and docs explain intent and constraints, not restatements of code.
 - Do not add runtime dependencies without discussion; the plugin currently
