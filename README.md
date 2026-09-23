@@ -11,7 +11,7 @@
 - `scripts/`：会话审计、可复现评估、运行时冒烟测试和发布校验。
 - `docs/`：[架构](./docs/architecture.md)、[配置](./docs/configuration.md)、
   [评估证据](./docs/evaluation.md)、[发布](./docs/publishing.md)。
-- `.github/workflows/`：兼容性检查和私有仓库发布检查。
+- `.github/workflows/ci-and-release.yml`：多版本 Node 兼容性检查，通过后按标签发布到私有仓库。
 - `lib/`、`node_modules/`：构建产物和本地依赖，不提交 Git。
   `.validation/` 为临时测试输出，由评估脚本按需重建。
 

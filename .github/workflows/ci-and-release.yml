@@ -1,25 +1,70 @@
-name: Verify and Publish to Private npm
+# What this workflow does
+#
+#   check    Runs `pnpm run check` (typecheck, lint, test, build, publint) on
+#            every Node version the package claims to support. Triggered by any
+#            push or pull request, so a broken commit is visible immediately.
+#
+#   publish  Packs the built package and publishes it to the private registry at
+#            npm.tokensapi.ai. Runs only when a `v*` tag is pushed, and only
+#            after every `check` matrix job has passed.
+#
+# There is no manual trigger: pushing a tag is the one and only release path, so
+# a version can never be published twice in parallel. To retry a failed release,
+# re-run this workflow from the Actions tab.
+name: CI and Release
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - 'v*'
+  pull_request:
 
 permissions:
   contents: read
 
 concurrency:
-  group: publish-npm-${{ github.ref }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Superseded branch runs are pointless, but a tag run must never be cancelled
+  # halfway through publishing.
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 env:
   NPM_REGISTRY: https://npm.tokensapi.ai/
 
 jobs:
   check:
-    name: Test, build, and verify package
+    name: Test and build on Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Mirrors the engines range in package.json.
+        node: [22.19.0, 24]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Run checks
+        run: pnpm run check
+
+  publish:
+    name: Publish to private npm
+    # Every supported Node version must pass before a tag can ship.
+    needs: check
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -42,32 +87,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts --registry=https://registry.npmjs.org/
 
-      - name: Run checks
-        run: pnpm run check
-
       - name: Validate release identity
-        if: startsWith(github.ref, 'refs/tags/')
         env:
           RELEASE_TAG: ${{ github.ref_name }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: node scripts/validate-release.mjs "$RELEASE_TAG"
 
       - name: Refuse fork publishing
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
           if [ "$GITHUB_REPOSITORY" != 'TokensAPI/tokens_DshProgressiveTools_code' ]; then
             echo 'Release publishing is enabled only for the canonical repository; this fork run remains check-only.' >&2
             exit 1
           fi
 
+      - name: Build package
+        run: pnpm run build
+
       - name: Pack verified release
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
           mkdir -p .release
           pnpm pack --pack-destination .release --ignore-scripts
 
       - name: Publish to private npm
-        if: startsWith(github.ref, 'refs/tags/')
         env:
           NODE_AUTH_TOKEN: ${{ secrets.VERDACCIO_PUBLISH_TOKEN }}
         run: |
@@ -82,6 +123,8 @@ jobs:
           fi
           package_name="$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).name")"
           package_version="$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version")"
+          # An unreachable or unauthorized registry must abort instead of reading
+          # as "this version is not published yet".
           set +e
           view_output="$(npm view "$package_name@$package_version" version --registry="$NPM_REGISTRY" 2>&1)"
           view_status=$?

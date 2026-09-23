@@ -16,12 +16,14 @@ package version already exists in the private registry.
 
 ## Release flow
 
-Pushes to `main` run checks only. A stable tag must exactly match the package
-version, for example `v0.2.2` for `0.2.2`; pushing that tag runs checks and then
-publishes to the private registry. Prerelease tags are rejected.
+`ci-and-release.yml` runs the checks on every supported Node version for any push or pull
+request. Publishing is a separate job in the same workflow: it waits for all of
+those checks, then runs only for a tag starting with `v`. A stable tag must
+exactly match the package version, for example `v0.2.2` for `0.2.2`. Prerelease
+tags are rejected.
 
-The manual `publish-npm.yml` entry accepts an existing stable tag in
-`release_tag` for a retry. A manual run with the field empty is check-only.
+Tags are the only release path; there is no manual trigger. To retry a failed
+release, re-run the workflow for that tag from the Actions page.
 
 For a fork, GitHub may require a one-time confirmation in the repository's
 Actions page: choose the workflow and confirm `I understand my workflows, go

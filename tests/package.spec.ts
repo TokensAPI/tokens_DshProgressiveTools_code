@@ -19,9 +19,10 @@ describe('Tokens package contract', () => {
       peerDependencies: Record<string, string>
       dsh: { bundle: { patch: string } }
       publishConfig: { access: string; registry: string }
+      engines: { node: string }
     }
     const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
-    const workflow = await readFile(new URL('../.github/workflows/publish-npm.yml', import.meta.url), 'utf8')
+    const workflow = await readFile(new URL('../.github/workflows/ci-and-release.yml', import.meta.url), 'utf8')
 
     expect(manifest.name).toBe('@tokensapi/dsh-progressive-tools')
     expect(manifest.version).toBe('0.2.1')
@@ -29,15 +30,19 @@ describe('Tokens package contract', () => {
     expect(manifest.repository).toMatchObject({ type: 'git' })
     expect(manifest.license).toBe('MIT')
     expect(manifest.publishConfig).toEqual({ access: 'public', registry: 'https://npm.tokensapi.ai/' })
-    expect(workflow).toContain('name: Verify and Publish to Private npm')
+    expect(workflow).toContain('name: CI and Release')
     expect(workflow).toContain('https://npm.tokensapi.ai/')
     expect(workflow).toContain('VERDACCIO_PUBLISH_TOKEN')
-    expect(workflow).toContain("tags:\n      - 'v*'")
     expect(workflow).not.toMatch(/npm publish[^\n]*registry\.npmjs\.org/)
+    // Checks cover the whole engines range, and a tag ships only once every
+    // version in it has passed.
+    expect(manifest.engines.node).toBe('^22.19.0 || >=24.0.0')
+    expect(workflow).toContain('node: [22.19.0, 24]')
+    expect(workflow).toContain('needs: check')
     // Tag pushes are the only release path; a manual dispatch would take a
     // different concurrency key and could publish the same version in parallel.
     expect(workflow).not.toContain('workflow_dispatch')
-    expect(workflow).toContain('group: publish-npm-${{ github.ref }}')
+    expect(workflow).toContain("if: startsWith(github.ref, 'refs/tags/v')")
     // An unreachable or unauthorized registry must abort instead of reading as
     // "version not published yet".
     expect(workflow).toContain('*E404*')
