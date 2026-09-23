@@ -33,8 +33,15 @@ describe('Tokens package contract', () => {
     expect(workflow).toContain('https://npm.tokensapi.ai/')
     expect(workflow).toContain('VERDACCIO_PUBLISH_TOKEN')
     expect(workflow).toContain("tags:\n      - 'v*'")
-    expect(workflow).toContain('release_tag')
     expect(workflow).not.toMatch(/npm publish[^\n]*registry\.npmjs\.org/)
+    // Tag pushes are the only release path; a manual dispatch would take a
+    // different concurrency key and could publish the same version in parallel.
+    expect(workflow).not.toContain('workflow_dispatch')
+    expect(workflow).toContain('group: publish-npm-${{ github.ref }}')
+    // An unreachable or unauthorized registry must abort instead of reading as
+    // "version not published yet".
+    expect(workflow).toContain('*E404*')
+    expect(workflow).toContain('Cannot confirm that')
     expect(manifest.tokenscowork).toEqual({
       displayName: {
         'zh-CN': '渐进式工具',
