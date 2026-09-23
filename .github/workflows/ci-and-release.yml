@@ -106,7 +106,10 @@ jobs:
       - name: Pack verified release
         run: |
           mkdir -p .release
-          pnpm pack --pack-destination .release --ignore-scripts
+          # The prepack script re-runs the full check suite, which the check job
+          # already did on both Node versions. Pack has no --ignore-scripts
+          # option of its own, so the setting goes through --config.
+          pnpm pack --pack-destination .release --config.ignore-scripts=true
 
       - name: Publish to private npm
         env:

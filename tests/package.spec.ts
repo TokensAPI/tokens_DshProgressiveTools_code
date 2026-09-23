@@ -47,6 +47,9 @@ describe('Tokens package contract', () => {
     // "version not published yet".
     expect(workflow).toContain('*E404*')
     expect(workflow).toContain('Cannot confirm that')
+    // pnpm pack rejects --ignore-scripts as an unknown option, which would
+    // abort the release before anything is published.
+    expect(workflow).not.toMatch(/pnpm pack .*--ignore-scripts/)
     expect(manifest.tokenscowork).toEqual({
       displayName: {
         'zh-CN': '渐进式工具',
