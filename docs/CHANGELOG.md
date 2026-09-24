@@ -6,6 +6,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.2.3] - 2026-09-24
+
+### Added
+
+- `dsh.engine` declares the target DSH runtime range (`0.1.0-rc.8 || 0.1.3-alpha.1`),
+  matching the core peer ranges. Upstream does not read this field today, so nothing
+  changes at install time; declaring it is what lets a plugin check decide whether
+  this plugin and a given runtime are compatible, which previously could not be
+  judged at all. A package test pins the field to the `@deepseek-ai/dsh-tools` peer
+  range so the two cannot drift apart.
+
+### Changed
+
+- The package contract test no longer pins a literal version string. It checks the
+  version is well-formed semver and that the changelog has a section for it, so a
+  bump cannot fail the suite for the wrong reason on the way to a release.
+
 ## [Tokens 0.2.2] - 2026-09-23
 
 ### Changed
@@ -202,7 +219,8 @@ prefix is byte-stable again from the second request onward.
 - Bundle manifest, GitHub source-install build path, documentation, tests, and
   continuous integration.
 
-[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.3...HEAD
+[Tokens 0.2.3]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.3
 [Tokens 0.2.2]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.2
 [Tokens 0.2.1]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.1
 [Tokens 0.2.0]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.0

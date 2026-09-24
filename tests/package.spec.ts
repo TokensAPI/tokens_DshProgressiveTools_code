@@ -20,16 +20,20 @@ describe('Tokens package contract', () => {
       }
       scripts: Record<string, string>
       peerDependencies: Record<string, string>
-      dsh: { bundle: { patch: string } }
+      dsh: { engine: string; bundle: { patch: string } }
       publishConfig: { access: string; registry: string }
       engines: { node: string }
     }
     const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
     const checks = await readFile(new URL('../.github/workflows/checks.yml', import.meta.url), 'utf8')
     const release = await readFile(new URL('../.github/workflows/publish-npm.yml', import.meta.url), 'utf8')
+    const changelog = await readFile(new URL('../docs/CHANGELOG.md', import.meta.url), 'utf8')
 
     expect(manifest.name).toBe('@tokensapi/dsh-progressive-tools')
-    expect(manifest.version).toBe('0.2.2')
+    // 不钉字面版本号:那样每次 bump 都会假失败,而假失败正好发生在发布路上。
+    // 真正要保的是版本号形状合法,且变更记录里确实有这一版的小节。
+    expect(manifest.version).toMatch(/^\d+\.\d+\.\d+(?:-[\w.]+)?$/)
+    expect(changelog).toContain(`## [Tokens ${manifest.version}]`)
     expect(manifest.description).toBeTruthy()
     expect(manifest.repository).toMatchObject({ type: 'git' })
     expect(manifest.license).toBe('MIT')
@@ -80,6 +84,9 @@ describe('Tokens package contract', () => {
       '@deepseek-ai/dsh-tools': '0.1.0-rc.8 || 0.1.3-alpha.1',
     })
     expect(manifest.dsh.bundle.patch).toBe('./cordis.patch.yml')
+    // dsh.engine 声明目标 DSH 运行时范围。这里不硬编码字面量,而是钉住它与
+    // 核心 peer 同源:两者一旦分叉,就是"声明支持某运行时却没有对应的 peer"。
+    expect(manifest.dsh.engine).toBe(manifest.peerDependencies['@deepseek-ai/dsh-tools'])
     expect(name).toBe('tokens-progressive-tools')
     expect(patch).toContain('id: tokens-progressive-tools')
     expect(patch).toContain("name: '@tokensapi/dsh-progressive-tools'")

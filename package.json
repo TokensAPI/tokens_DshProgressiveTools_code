@@ -1,6 +1,6 @@
 {
   "name": "@tokensapi/dsh-progressive-tools",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Progressive tool discovery with native execution and optional stable proxy transport",
   "tokenscowork": {
     "displayName": {
@@ -71,6 +71,7 @@
     "registry": "https://npm.tokensapi.ai/"
   },
   "dsh": {
+    "engine": "0.1.0-rc.8 || 0.1.3-alpha.1",
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
