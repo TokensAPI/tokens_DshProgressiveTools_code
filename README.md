@@ -12,7 +12,7 @@
 - `docs/`：[架构](./docs/architecture.md)、[配置](./docs/configuration.md)、
   [评估证据](./docs/evaluation.md)、[发布](./docs/publishing.md)。
 - `.github/workflows/checks.yml`：分支与 PR 上的多版本 Node 兼容性检查。
-- `.github/workflows/publish-npm.yml`：按标签发布到私有仓库，发布前自带同样的检查门禁。
+- `.github/workflows/publish-npm.yml`：按标签发布到私有仓库，发布前执行检查门禁，发布后自动检查准确版本的插件包。需配置只读 `PLUGIN_CHECK_REGISTRY_TOKEN`；失败后仅重跑包检查任务。
 - `lib/`、`node_modules/`：构建产物和本地依赖，不提交 Git。
   `.validation/` 为临时测试输出，由评估脚本按需重建。
 
