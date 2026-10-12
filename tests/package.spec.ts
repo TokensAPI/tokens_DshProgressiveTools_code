@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_ALWAYS_VISIBLE } from '../src/defaults.js'
@@ -124,4 +125,23 @@ describe('Tokens package contract', () => {
       'dsh_im_return_file',
     ]))
   })
+
+  // The market reads `tokenscowork`; the dsh Plugins page reads only `locale/<lang>.json`.
+  it('ships the market metadata as dsh locale files too', async () => {
+    const read = async (path: string) => JSON.parse(await readFile(new URL(`../${path}`, import.meta.url), 'utf8'))
+    const manifest = await read('package.json')
+    const metas = []
+    for (const [lang, key] of [['en', 'en-US'], ['zh', 'zh-CN']] as const) {
+      const { meta } = await read(`locale/${lang}.json`)
+      expect(meta).toEqual({ title: manifest.tokenscowork.displayName[key], description: manifest.tokenscowork.summary[key] })
+      metas.push(meta)
+    }
+    expect(metas[0].title).not.toBe(metas[1].title)
+    expect(metas[0].description).not.toBe(metas[1].description)
+    expect(manifest.exports).toMatchObject({ './package.json': './package.json', './locale/*.json': './locale/*.json' })
+    const [{ files }] = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
+      cwd: new URL('..', import.meta.url), encoding: 'utf8', shell: process.platform === 'win32', stdio: ['ignore', 'pipe', 'ignore'],
+    })) as [{ files: { path: string }[] }]
+    expect(files.map(({ path }) => path)).toEqual(expect.arrayContaining(['package.json', 'locale/en.json', 'locale/zh.json']))
+  }, 60_000)
 })

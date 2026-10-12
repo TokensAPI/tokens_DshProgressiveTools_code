@@ -19,7 +19,9 @@
     ".": {
       "types": "./lib/index.d.ts",
       "default": "./lib/index.js"
-    }
+    },
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
   },
   "files": [
     "lib/**/*.js",
@@ -27,7 +29,8 @@
     "cordis.patch.yml",
     "docs/**/*.md",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "locale/*.json"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
