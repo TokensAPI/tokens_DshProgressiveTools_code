@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.2.4] - 2026-10-12
+
+### Added
+
+- `locale/en.json` and `locale/zh.json` carry the display metadata the dsh Plugins page
+  reads, exported as `./locale/*.json`. That page ignores the market's `tokenscowork`
+  field, so it previously fell back to the full package name and the single-language
+  `description`. The package test keeps both sources identical, the two languages
+  distinct, and the files in the packed tarball.
+
 ## [Tokens 0.2.3] - 2026-09-24
 
 ### Added
@@ -219,7 +229,8 @@ prefix is byte-stable again from the second request onward.
 - Bundle manifest, GitHub source-install build path, documentation, tests, and
   continuous integration.
 
-[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.4...HEAD
+[Tokens 0.2.4]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.4
 [Tokens 0.2.3]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.3
 [Tokens 0.2.2]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.2
 [Tokens 0.2.1]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.1
