@@ -17,7 +17,7 @@ exact definitions for direct calls through the host's unchanged execution pipeli
 - `docs/`: [architecture](./architecture.md), [configuration](./configuration.md),
   [evaluation evidence](./evaluation.md), [publishing](./publishing.md).
 - `.github/workflows/checks.yml`: multi-version Node checks on branches and pull requests.
-- `.github/workflows/publish-npm.yml`: tag-gated release to the private registry, followed by automatic inspection of the exact published package. Configure the read-only `PLUGIN_CHECK_REGISTRY_TOKEN`; retry only the package check if it fails.
+- `.github/workflows/publish-npm.yml`: tag-gated release to the private registry, followed by automatic inspection of the exact published package. The check uses the read-only `PLUGIN_CHECK_REGISTRY_TOKEN`; without it the release warns and skips the check instead of failing. Retry only the package check if it fails.
 - `lib/` and `node_modules/`: generated build output and installed dependencies.
   `.validation/` is disposable local test output, recreated by evaluation scripts.
 

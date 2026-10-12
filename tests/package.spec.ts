@@ -63,6 +63,12 @@ describe('Tokens package contract', () => {
     // "version not published yet".
     expect(release).toContain('*E404*')
     expect(release).toContain('Cannot confirm that')
+    // A missing read-only checker secret skips the post-publish package check instead of
+    // blocking the release; a configured one must still be the market account.
+    expect(release).toContain("if: needs.publish.outputs.package-check == 'true'")
+    expect(release).toContain('package-check: ${{ steps.checker.outputs.enabled }}')
+    expect(release).toContain("echo 'enabled=false' >> \"$GITHUB_OUTPUT\"")
+    expect(release).not.toContain('请配置只读 Secret')
     // pnpm pack rejects --ignore-scripts as an unknown option, which would
     // abort the release before anything is published.
     expect(release).not.toMatch(PACK_IGNORE_SCRIPTS)
