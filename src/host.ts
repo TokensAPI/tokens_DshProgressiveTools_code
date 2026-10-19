@@ -52,12 +52,12 @@ export interface LoggedToolResult {
 /**
  * Read a logged `tool/result` message under either runtime's envelope.
  *
- * 0.1.0 logged a user-role message whose single `tool-result` content block
- * carried `toolCallId`, `isError` and the nested result blocks. From 0.1.5 the
- * wrapper block is gone: the message has role `tool`, the result blocks sit
- * directly on `content`, and `isError` is a field of the message. Replay reads
- * both, because a session persisted by an older runtime stays readable and
- * resume on a current one must not silently restore nothing.
+ * Every 0.1 release logged a user-role message whose single `tool-result`
+ * content block carried `toolCallId`, `isError` and the nested result blocks.
+ * 0.2 removed the wrapper block: the message has role `tool`, the result blocks
+ * sit directly on `content`, and `isError` is a field of the message. Replay
+ * reads both, because a session persisted by a 0.1 runtime stays readable and
+ * resume on 0.2 must not silently restore nothing.
  * @param message - the logged message, from a log this plugin did not write.
  * @returns the result's identity and blocks, or undefined when the message is
  * not a tool result.

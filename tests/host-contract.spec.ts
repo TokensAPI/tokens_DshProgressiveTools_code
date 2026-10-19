@@ -15,7 +15,8 @@ import { createScope } from '@deepseek-ai/dsh-scope'
 import { KNOWN_SESSION_EVENT_TYPES, Session, SessionId } from '@deepseek-ai/dsh-session'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
-import { isNestedDispatchEvent } from '../src/host.js'
+import { ToolCallId, createToolResultMessage } from '@deepseek-ai/dsh-llm'
+import { isNestedDispatchEvent, loggedToolResultOf } from '../src/host.js'
 import * as Plugin from '../src/index.js'
 
 /** Every sub-dispatch log name the plugin claims to replay. 0.1.0 used the first. */
@@ -97,16 +98,19 @@ describe('cross-version host contract', () => {
   })
 
   it('reads a tool result logged under either runtime envelope', async () => {
-    // 0.1.0 wrapped the blocks in one `tool-result` content block carrying
-    // `isError`; from 0.1.5 the blocks sit directly on a tool-role message.
+    // Every 0.1 release wrapped the blocks in one `tool-result` content block
+    // carrying `isError`; 0.2 dropped that wrapper and moved `isError` onto a
+    // tool-role message. Both shapes are built by hand and asserted separately,
+    // so each is exercised whichever runtime the suite runs against.
     const restored = JSON.stringify({ protocol: 'dsh-progressive-tools/native-v1', allLoadedTools: ['vendor_beta'] })
     const blocks = [{ type: 'text', text: restored }]
     const envelopes = {
-      'wrapped (0.1.0)': {
+      'wrapped (every 0.1)': {
+        role: 'user',
         source: { kind: 'tool', callId: 'call-1' },
         content: [{ type: 'tool-result', toolCallId: 'call-1', isError: false, content: blocks }],
       },
-      'flat (0.1.5 and later)': {
+      'flat (0.2 and later)': {
         role: 'tool',
         source: { kind: 'tool', callId: 'call-1' },
         toolCallId: 'call-1',
@@ -127,6 +131,31 @@ describe('cross-version host contract', () => {
 
       expect(await assembled(ctx, agent), shape).toEqual(['tool_search', 'vendor_beta'])
     }
+  })
+
+  it('reads the tool-result envelope the installed runtime itself writes', () => {
+    // The case above builds both envelopes by hand, so it passes on either
+    // runtime whether or not the reader still understands the installed one.
+    // Here the shape comes from the runtime's own constructor, so a third
+    // envelope upstream fails here instead of silently restoring nothing.
+    const blocks = [{ type: 'text' as const, text: JSON.stringify({ protocol: 'dsh-progressive-tools/native-v1', allLoadedTools: ['vendor_beta'] }) }]
+    const message = createToolResultMessage({ callId: ToolCallId('call-1'), isError: false, content: blocks })
+
+    const read = loggedToolResultOf(message)
+
+    expect(read?.callId).toBe('call-1')
+    expect(read?.isError).toBe(false)
+    expect(read?.content).toEqual(blocks)
+
+    // One of the two envelopes in full, never a half-recognized mixture: the
+    // wrapper carries `isError` on its block and rides a user-role message,
+    // the flat one carries it on a tool-role message.
+    const record = message as unknown as Record<string, unknown>
+    const content = record.content as Record<string, unknown>[]
+    const wrapped = content.length === 1 && content[0]?.type === 'tool-result'
+
+    expect(record.role).toBe(wrapped ? 'user' : 'tool')
+    expect(wrapped ? content[0]?.isError : record.isError).toBe(false)
   })
 
   it('reads a legacy session that exposes an events array instead of snapshotEvents', async () => {

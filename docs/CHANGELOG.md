@@ -10,16 +10,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- **Resume reads a tool result that any supported runtime logged.** 0.1.0 logged
-  a tool result as a user-role message wrapping the blocks in one `tool-result`
-  content block that carried `toolCallId` and `isError`. From 0.1.5 that wrapper
-  is gone: the message has role `tool`, the result blocks sit directly on
-  `content`, and `isError` is a field of the message. Replay only understood the
-  0.1.0 envelope, so on both shipping runtimes — 0.1.5-rc.2 in TokensCowork 0.5
-  and 0.2.0-rc.2 in 0.6 — a resumed session restored no discovery from
-  top-level search results, and the monotonic guard then denied tools the model
-  had already loaded. `loggedToolResultOf` in `src/host.ts` reads either
-  envelope, so an older persisted session stays readable too.
+- **Resume reads a tool result that any supported runtime logged.** Every 0.1
+  release logged a tool result as a user-role message wrapping the blocks in one
+  `tool-result` content block that carried `toolCallId` and `isError`. 0.2
+  removed that wrapper: the message has role `tool`, the result blocks sit
+  directly on `content`, and `isError` is a field of the message. Replay only
+  understood the 0.1 envelope, so on TokensCowork 0.6 (0.2.0-rc.2) a resumed
+  session restored no discovery from top-level search results, and the monotonic
+  guard then denied tools the model had already loaded. TokensCowork 0.5
+  (0.1.5-rc.2) logs the 0.1 envelope and was not affected.
+  `loggedToolResultOf` in `src/host.ts` reads either envelope, so a session
+  persisted by either runtime stays readable.
 
 ### Changed
 
@@ -41,8 +42,9 @@ All notable changes to this project are documented here. The format follows
 - `tests/host-contract.spec.ts` locks each renamed boundary from both sides: the
   sub-dispatch log replays under either name and not under an unknown one, the
   name the installed runtime declares is one the plugin accepts, both tool-result
-  envelopes restore discovery, a legacy `events` array is still read, and eager
-  initialization happens on the announcement the installed runtime emits.
+  envelopes restore discovery, the envelope the installed runtime itself writes
+  is the one the reader extracts, a legacy `events` array is still read, and
+  eager initialization happens on the announcement the installed runtime emits.
   Narrowing `src/host.ts` back to a single spelling fails these cases.
 
 ## [Tokens 0.2.5] - 2026-10-19
