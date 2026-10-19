@@ -2,7 +2,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import { defineTool, renderToolsSdk, renderToolsSdkPy } from '@deepseek-ai/dsh-tools'
 import type { ToolExecutionToken } from '@deepseek-ai/dsh-tools'
-import { isNestedDispatchEvent } from './host.js'
+import { isNestedDispatchEvent, loggedToolResultOf } from './host.js'
 import type { JsonValue } from './host.js'
 import { buildCatalog, matchesToolName, searchTools } from './catalog.js'
 import type { ResolvedConfig } from './types.js'
@@ -65,14 +65,12 @@ export function applyNativeDiscovery(ctx: Context, config: ResolvedConfig): void
       if (event.type === 'tool/call' && typeof data.callId === 'string' && typeof data.name === 'string') {
         calls.set(data.callId, { name: data.name, args: data.arguments })
       } else if (event.type === 'tool/result' && record(data.message)) {
-        const message = data.message
-        const source = record(message.source) ? message.source : undefined
-        const call = calls.get(String(source?.callId))
-        const block = Array.isArray(message.content) ? message.content[0] : undefined
-        if (!record(block) || block.type !== 'tool-result' || block.isError === true) continue
+        const result = loggedToolResultOf(data.message)
+        if (result === undefined || result.isError) continue
+        const call = calls.get(result.callId)
         // A result-only history window can restore our versioned presentation snapshot.
         if (call?.name === config.toolName || (!call && record(data.meta) && data.meta.protocol === PROTOCOL)) {
-          for (const name of loadedNames(data.meta).concat(loadedNames(contentValue(block.content)))) loaded.add(name)
+          for (const name of loadedNames(data.meta).concat(loadedNames(contentValue(result.content)))) loaded.add(name)
         } else if (call?.name === 'skill') bindSkill(agent, loaded, call.args)
       } else if (isNestedDispatchEvent(event.type) && data.isError === false) {
         if (data.name === config.toolName) {

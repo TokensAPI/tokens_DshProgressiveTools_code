@@ -18,7 +18,7 @@ import type {
   ToolExecutionResult,
   ToolExecutionToken,
 } from '@deepseek-ai/dsh-tools'
-import { isNestedDispatchEvent } from './host.js'
+import { isNestedDispatchEvent, loggedToolResultOf } from './host.js'
 import type { JsonValue, NestedDispatchData } from './host.js'
 import {
   buildCatalog,
@@ -363,14 +363,12 @@ function textContentValue(content: unknown): unknown {
 }
 
 function toolResultContent(message: unknown): { callId: string; isError: boolean; value: unknown } | undefined {
-  if (!isRecord(message) || !isRecord(message.source) || typeof message.source.callId !== 'string') return undefined
-  if (!Array.isArray(message.content) || !isRecord(message.content[0])) return undefined
-  const block = message.content[0]
-  if (block.type !== 'tool-result') return undefined
+  const result = loggedToolResultOf(message)
+  if (result === undefined) return undefined
   return {
-    callId: message.source.callId,
-    isError: block.isError === true,
-    value: textContentValue(block.content),
+    callId: result.callId,
+    isError: result.isError,
+    value: textContentValue(result.content),
   }
 }
 

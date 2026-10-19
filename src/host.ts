@@ -40,3 +40,39 @@ export interface NestedDispatchData {
   readonly isError: boolean
   readonly content: unknown
 }
+
+/** One settled tool result from the session log, in the fields replay reads. */
+export interface LoggedToolResult {
+  readonly callId: string
+  readonly isError: boolean
+  /** The tool's own result blocks, without either runtime's envelope. */
+  readonly content: unknown
+}
+
+/**
+ * Read a logged `tool/result` message under either runtime's envelope.
+ *
+ * 0.1.0 logged a user-role message whose single `tool-result` content block
+ * carried `toolCallId`, `isError` and the nested result blocks. From 0.1.5 the
+ * wrapper block is gone: the message has role `tool`, the result blocks sit
+ * directly on `content`, and `isError` is a field of the message. Replay reads
+ * both, because a session persisted by an older runtime stays readable and
+ * resume on a current one must not silently restore nothing.
+ * @param message - the logged message, from a log this plugin did not write.
+ * @returns the result's identity and blocks, or undefined when the message is
+ * not a tool result.
+ */
+export function loggedToolResultOf(message: unknown): LoggedToolResult | undefined {
+  if (!isRecord(message) || !isRecord(message.source) || typeof message.source.callId !== 'string') return undefined
+  const callId = message.source.callId
+  if (!Array.isArray(message.content)) return undefined
+  const first: unknown = message.content[0]
+  if (isRecord(first) && first.type === 'tool-result') {
+    return { callId, isError: first.isError === true, content: first.content }
+  }
+  return { callId, isError: message.isError === true, content: message.content }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}

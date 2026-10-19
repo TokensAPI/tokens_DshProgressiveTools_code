@@ -1,6 +1,6 @@
 {
   "name": "@tokensapi/dsh-progressive-tools",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Progressive tool discovery with native execution and optional stable proxy transport",
   "tokenscowork": {
     "displayName": {
@@ -40,9 +40,10 @@
     "test:coverage": "vitest run --coverage",
     "audit:session": "node scripts/audit-session.mjs",
     "test:runtime": "node --import ./scripts/runtime-loader.mjs scripts/native-smoke.mjs",
+    "check:dsh-0.1": "node scripts/with-dsh-runtime.mjs 0.1.5-rc.2 4.0.2 typecheck test build test:runtime",
     "eval:offline": "node scripts/evaluate.mjs",
     "eval:live": "node scripts/evaluate.mjs --live",
-    "check": "node --check scripts/audit-session.mjs && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build && pnpm run publint",
+    "check": "node --check scripts/audit-session.mjs && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build && pnpm run test:runtime && pnpm run publint",
     "publint": "publint",
     "prepack": "pnpm run check"
   },
@@ -91,14 +92,16 @@
     "@deepseek-ai/schemastery": "^3.18.1"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.1",
-    "@deepseek-ai/dsh-agent": "0.1.0-rc.8",
-    "@deepseek-ai/dsh-agent-loop": "0.1.0-rc.8",
-    "@deepseek-ai/dsh-llm": "0.1.0-rc.8",
-    "@deepseek-ai/dsh-scope": "0.1.0-rc.8",
-    "@deepseek-ai/dsh-session": "0.1.0-rc.8",
-    "@deepseek-ai/dsh-system-prompt": "0.1.0-rc.8",
-    "@deepseek-ai/dsh-tools": "0.1.0-rc.8",
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-agent": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-agent-loop": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-attachment": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-scope": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-session": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-session-projection": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-system-prompt": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
     "@types/node": "^22.19.0",
     "@vitest/coverage-v8": "^4.1.8",
     "oxlint": "^1.76.0",

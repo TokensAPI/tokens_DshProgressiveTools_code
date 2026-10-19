@@ -20,6 +20,7 @@ describe('Tokens package contract', () => {
         summary: { 'zh-CN': string; 'en-US': string }
       }
       scripts: Record<string, string>
+      devDependencies: Record<string, string>
       peerDependencies: Record<string, string>
       dsh: { engine: string; bundle: { patch: string } }
       publishConfig: { access: string; registry: string }
@@ -40,6 +41,21 @@ describe('Tokens package contract', () => {
     expect(manifest.license).toBe('MIT')
     expect(manifest.publishConfig).toEqual({ access: 'public', registry: 'https://npm.tokensapi.ai/' })
     expect(checks).toContain('name: Checks')
+    // 一个发布版要同时服务两条产品线,所以检查必须在两个在用的运行时上各跑一遍:
+    // 开发基线是 0.6 的 0.2.0-rc.2,这条腿把开发依赖重钉到 0.5 的 0.1.5-rc.2。
+    // 少了它,只在一条线上成立的改动会静悄悄通过 —— 这正是 0.2.5 那两个缺陷
+    // 漏到用户手里的方式。
+    expect(manifest.scripts['check:dsh-0.1']).toBe('node scripts/with-dsh-runtime.mjs 0.1.5-rc.2 4.0.2 typecheck test build test:runtime')
+    // 两条腿都要跑真实依赖图上的 smoke:单元用例用的是夹具,只有它会把编译产物
+    // 装进该运行时真正的依赖图里跑一遍。
+    expect(manifest.scripts.check).toContain('pnpm run test:runtime')
+    expect(checks).toContain('pnpm run check:dsh-0.1')
+    // 开发基线必须是当前产品在跑的运行时,而且所有 DSH 开发依赖同一个版本,否则
+    // 装出来的是一个没人发布过的混合运行时。`check:dsh-0.1` 临时重钉时按它的版本核对。
+    const dshBaseline = process.env.DSH_RUNTIME_PIN ?? '0.2.0-rc.2'
+    expect(Object.entries(manifest.devDependencies)
+      .filter(([pkg]) => pkg.startsWith('@deepseek-ai/dsh'))
+      .filter(([, version]) => version !== dshBaseline)).toEqual([])
     expect(release).toContain('name: Publish to private npm')
     expect(release).toContain('https://npm.tokensapi.ai/')
     expect(release).toContain('VERDACCIO_PUBLISH_TOKEN')

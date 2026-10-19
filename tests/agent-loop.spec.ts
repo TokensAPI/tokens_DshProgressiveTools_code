@@ -3,11 +3,12 @@ import { Context } from '@deepseek-ai/cordis'
 import AgentRegistry from '@deepseek-ai/dsh-agent'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import LlmRuntime, {
-  CallId,
+  ToolCallId,
   createUserMessage,
 } from '@deepseek-ai/dsh-llm'
 import type { GenerateOptions, StreamChunk } from '@deepseek-ai/dsh-llm'
 import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
+import SessionProjections from '@deepseek-ai/dsh-session-projection'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
 import * as ProgressiveTools from '../src/index.js'
@@ -39,6 +40,7 @@ describe('AgentLoop request integration', () => {
     await ctx.plugin(SystemPrompt, {})
     await ctx.plugin(ToolRuntime)
     await ctx.plugin(SessionStore)
+    await ctx.plugin(SessionProjections)
     await ctx.plugin(AgentRegistry)
     await ctx.plugin(LlmRuntime)
     for (const name of ['browser_open', 'browser_click', 'db_query', 'skill', 'ask_user_question']) {
@@ -59,7 +61,7 @@ describe('AgentLoop request integration', () => {
       return oneStopResponse()
     })
 
-    const agent = ctx.agentLoop.create(SessionId('request-integration'), {
+    const agent = await ctx.agentLoop.create(SessionId('request-integration'), {
       provider: 'fixture',
       model: 'fixture',
     })
@@ -79,7 +81,7 @@ describe('AgentLoop request integration', () => {
 
     const search = await ctx.tools.execute({
       signal,
-      callId: CallId('integration-search'),
+      callId: ToolCallId('integration-search'),
       name: 'tool_search',
       arguments: { query: 'browser navigation' },
       agent,
@@ -100,7 +102,7 @@ describe('AgentLoop request integration', () => {
       expect(requests[1]?.tools?.map(tool => tool.name).sort()).toEqual([
         'ask_user_question', 'browser_click', 'browser_open', 'skill', 'tool_search',
       ])
-      const direct = await ctx.tools.execute({ signal, callId: CallId('native-direct'), name: 'browser_open', arguments: {}, agent })
+      const direct = await ctx.tools.execute({ signal, callId: ToolCallId('native-direct'), name: 'browser_open', arguments: {}, agent })
       expect(direct).toMatchObject({ isError: false, content: [{ type: 'text', text: 'ran:browser_open' }] })
     }
 
@@ -108,7 +110,7 @@ describe('AgentLoop request integration', () => {
     // write back into the stable prefix either.
     const status = await ctx.tools.execute({
       signal,
-      callId: CallId('integration-status'),
+      callId: ToolCallId('integration-status'),
       name: 'tool_search',
       arguments: { action: 'status' },
       agent,

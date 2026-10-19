@@ -63,17 +63,18 @@ not an 80.7% claim about total usage or cost.
 
 ## Regression and runtime checks
 
-- 61 tests passed, including native AgentLoop request projection, exact-name
+- 66 tests passed, including native AgentLoop request projection, exact-name
   loading, paginated recovery, localized group aliases, no implicit sibling
   activation, scope restrictions, post-policy rejection, native content/meta,
   deferred contexts, conclusion, cancellation, errors, reconnect, session
   isolation, snapshot/nested-history restoration and unload.
 - Type checking, lint, compilation and package lint passed on the development
-  runtime 0.1.0-rc.8. The shipped build (`src` only) also compiles against
-  0.1.5-rc.2 and 0.2.0-rc.2; the test fixtures still pin 0.1 host APIs
-  (`CallId`, `Session.events`, the 0.1.0 sub-dispatch event name, the
-  synchronous `create()` result), so the Vitest suite itself runs on the
-  development runtime only.
+  runtime 0.2.0-rc.2 (TokensCowork 0.6). The same type check, suite and build
+  also passed on 0.1.5-rc.2 (TokensCowork 0.5) through
+  `pnpm run check:dsh-0.1`, which CI runs as its own job. The shipped build
+  (`src` only) additionally compiles against 0.1.0-rc.8, the floor of the peer
+  range, where the fixtures cannot run because that runtime's host APIs predate
+  every shipped product line.
 - Compiled plugin smoke tests passed against the real dependency graphs of
   0.1.0-rc.8, 0.1.5-rc.2 (TokensCowork 0.5) and 0.2.0-rc.2 (TokensCowork 0.6),
   including snapshot history, first assembly, loading, parameter validation,

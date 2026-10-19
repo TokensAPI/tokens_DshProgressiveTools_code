@@ -6,6 +6,45 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.2.6] - 2026-10-19
+
+### Fixed
+
+- **Resume reads a tool result that any supported runtime logged.** 0.1.0 logged
+  a tool result as a user-role message wrapping the blocks in one `tool-result`
+  content block that carried `toolCallId` and `isError`. From 0.1.5 that wrapper
+  is gone: the message has role `tool`, the result blocks sit directly on
+  `content`, and `isError` is a field of the message. Replay only understood the
+  0.1.0 envelope, so on both shipping runtimes — 0.1.5-rc.2 in TokensCowork 0.5
+  and 0.2.0-rc.2 in 0.6 — a resumed session restored no discovery from
+  top-level search results, and the monotonic guard then denied tools the model
+  had already loaded. `loggedToolResultOf` in `src/host.ts` reads either
+  envelope, so an older persisted session stays readable too.
+
+### Changed
+
+- **The development baseline is the runtime the current product ships.** The DSH
+  development dependencies move from 0.1.0-rc.8, which neither product line
+  runs, to 0.2.0-rc.2 (TokensCowork 0.6), and the test fixtures move to that
+  runtime's real shapes: `ToolCallId` for the call-id constructor,
+  `Session.snapshotEvents()` for history, `tool/ptc-dispatch` for the
+  sub-dispatch log, `kind: 'user'` for a producer-supplied context source (the
+  source vocabulary has no catch-all producer kind), an awaited
+  `agentLoop.create()`, and the `sessionProjections` service the loop now
+  injects. Checking a runtime nobody runs is how the 0.2.5 defects reached
+  users, and this is also what surfaced the envelope change above.
+- **The checks run on both product lines.** `pnpm run check:dsh-0.1` repins the
+  DSH development dependencies to 0.1.5-rc.2 and runs the typecheck, tests and
+  build again, restoring the manifest and lockfile afterwards; the `Checks`
+  workflow runs it as its own job. One published version serves both runtimes,
+  so a change that only holds on one of them now fails in CI.
+- `tests/host-contract.spec.ts` locks each renamed boundary from both sides: the
+  sub-dispatch log replays under either name and not under an unknown one, the
+  name the installed runtime declares is one the plugin accepts, both tool-result
+  envelopes restore discovery, a legacy `events` array is still read, and eager
+  initialization happens on the announcement the installed runtime emits.
+  Narrowing `src/host.ts` back to a single spelling fails these cases.
+
 ## [Tokens 0.2.5] - 2026-10-19
 
 ### Fixed

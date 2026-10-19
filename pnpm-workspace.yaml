@@ -1,10 +1,18 @@
 overrides:
-  '@deepseek-ai/dsh-attachment': 0.1.0-rc.8
-  '@deepseek-ai/dsh-brand': 0.1.0-rc.8
-  '@deepseek-ai/dsh-code-runtime': 0.1.0-rc.8
-  '@deepseek-ai/dsh-invariants': 0.1.0-rc.8
-  '@deepseek-ai/dsh-session-persistence': 0.1.0-rc.8
-  '@deepseek-ai/dsh-settings': 0.1.0-rc.8
-  '@deepseek-ai/dsh-timeout': 0.1.0-rc.8
-  '@deepseek-ai/dsh-typert-protocol': 0.1.0-rc.8
-  '@deepseek-ai/dsh-user-approval': 0.1.0-rc.8
+  # The development baseline is the runtime TokensCowork 0.6 ships. These pin
+  # the DSH packages that only reach the graph transitively, so one runtime
+  # version is installed instead of a mix.
+  '@deepseek-ai/dsh-attachment': 0.2.0-rc.2
+  '@deepseek-ai/dsh-brand': 0.2.0-rc.2
+  '@deepseek-ai/dsh-code-runtime': 0.2.0-rc.2
+  '@deepseek-ai/dsh-invariants': 0.2.0-rc.2
+  '@deepseek-ai/dsh-session-persistence': 0.2.0-rc.2
+  '@deepseek-ai/dsh-settings': 0.2.0-rc.2
+  '@deepseek-ai/dsh-timeout': 0.2.0-rc.2
+  '@deepseek-ai/dsh-typert-protocol': 0.2.0-rc.2
+  '@deepseek-ai/dsh-user-approval': 0.2.0-rc.2
+  # `dsh-llm` wants `~3.18.4` while this package declares `^3.18.1`, which
+  # installs two copies whose global type declarations then collide under
+  # `skipLibCheck: false`. Development-only: the published dependency range is
+  # unchanged, and a host install resolves one copy.
+  '@deepseek-ai/schemastery': 3.18.5

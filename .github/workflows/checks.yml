@@ -1,5 +1,7 @@
 # Runs the full check suite (typecheck, lint, test, build, publint) on every
-# Node version the package claims to support.
+# Node version the package claims to support, and the typecheck, tests and
+# build again on the other DSH runtime the peer range claims, because one
+# published version has to work on both product lines.
 #
 # Branches and pull requests only. Tag pushes are handled by publish-npm.yml,
 # which runs these same checks itself before it publishes anything.
@@ -47,3 +49,33 @@ jobs:
 
       - name: Run checks
         run: pnpm run check
+
+  cross-runtime:
+    name: Test and build on DSH 0.1.5-rc.2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # The development baseline is the runtime TokensCowork 0.6 ships. This
+      # repins the DSH development dependencies to the runtime 0.5 ships and
+      # runs the same checks, so a change cannot pass on one line and break the
+      # other unnoticed.
+      - name: Run checks against the 0.5 runtime
+        run: pnpm run check:dsh-0.1

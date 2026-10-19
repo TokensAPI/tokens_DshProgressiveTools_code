@@ -25,6 +25,7 @@ families at the cost of cache stability.
 | `src/types.ts` | Shared public types |
 | `src/host.ts` | Host names and shapes that differ between DSH 0.1 and 0.2 |
 | `tests/` | Vitest suites, including a real AgentLoop request regression test |
+| `tests/host-contract.spec.ts` | The cross-version boundaries in `src/host.ts`, locked from both sides |
 | `docs/` | Architecture, configuration reference, progressive disclosure model |
 | `cordis.patch.yml` | Bundle composition patch consumed by the DSH plugin loader |
 
@@ -37,10 +38,17 @@ pnpm run lint         # oxlint src tests
 pnpm run test         # vitest run
 pnpm run build        # tsc -p tsconfig.build.json -> lib/
 pnpm run check        # typecheck + lint + test + build + publint (run before finishing)
+pnpm run check:dsh-0.1 # the same typecheck/test/build on the other shipped runtime
 
 # the compiled plugin against a real host graph; repeat per supported runtime
 DSH_TEST_RUNTIME=<host package root> pnpm run test:runtime
 ```
+
+The development baseline is the DSH runtime the current product ships
+(0.2.0-rc.2). `check:dsh-0.1` covers the runtime the previous line ships
+(0.1.5-rc.2) by repinning the development dependencies and restoring them
+afterwards. Both run in CI. Do not move the baseline to a version no product
+line runs.
 
 ## Invariants that must not break
 

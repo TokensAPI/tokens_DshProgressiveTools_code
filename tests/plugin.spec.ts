@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { agentEvents } from '@deepseek-ai/dsh-agent'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import { CallId, createToolResultMessage } from '@deepseek-ai/dsh-llm'
+import { ToolCallId, createToolResultMessage } from '@deepseek-ai/dsh-llm'
 import { createScope } from '@deepseek-ai/dsh-scope'
 import type { Scope } from '@deepseek-ai/dsh-scope'
 import { Session, SessionId } from '@deepseek-ai/dsh-session'
@@ -77,7 +77,7 @@ async function assemble(ctx: Context, agent: Agent) {
 async function execute(ctx: Context, agent: Agent, name: string, argumentsValue: unknown, callId: string) {
   return ctx.tools.execute({
     signal,
-    callId: CallId(callId),
+    callId: ToolCallId(callId),
     name,
     arguments: argumentsValue,
     agent,
@@ -90,7 +90,7 @@ describe('progressive tools plugin', () => {
     source.append('turn/start', { turn: 1 })
     const session = {
       id: source.id,
-      snapshotEvents: () => source.events,
+      snapshotEvents: () => source.snapshotEvents(),
     } as unknown as Session
     const { agent, ctx } = await setup(session)
 
@@ -260,7 +260,7 @@ describe('progressive tools plugin', () => {
 
   it('restores cumulative discovery from a stable search result projection', async () => {
     const session = Session.create(SessionId('stable-restored-meta'))
-    const callId = CallId('stable-restore-search')
+    const callId = ToolCallId('stable-restore-search')
     session.append('turn/start', { turn: 1 })
     session.append('step/start', { turn: 1, step: 1 })
     session.append('tool/call', {
@@ -300,7 +300,7 @@ describe('progressive tools plugin', () => {
     session.append('turn/start', { turn: 1 })
     session.append('step/start', { turn: 1, step: 1 })
     for (const [index, names] of [['browser_open'], ['db_query']].entries()) {
-      const callId = CallId(`increment-replay-${index}`)
+      const callId = ToolCallId(`increment-replay-${index}`)
       session.append('tool/call', {
         turn: 1,
         step: 1,
@@ -340,7 +340,7 @@ describe('progressive tools plugin', () => {
 
   it('restores the status listing grant from replayed events', async () => {
     const session = Session.create(SessionId('stable-restored-status'))
-    const callId = CallId('stable-restore-status')
+    const callId = ToolCallId('stable-restore-status')
     session.append('turn/start', { turn: 1 })
     session.append('step/start', { turn: 1, step: 1 })
     session.append('tool/call', {
@@ -379,10 +379,10 @@ describe('progressive tools plugin', () => {
     const session = Session.create(SessionId('stable-restored-nested'))
     session.append('turn/start', { turn: 1 })
     session.append('step/start', { turn: 1, step: 1 })
-    session.append('tool/code-dispatch', {
-      rootCallId: CallId('stable-root'),
-      parentCallId: CallId('stable-parent'),
-      subCallId: CallId('stable-nested-search'),
+    session.append('tool/ptc-dispatch', {
+      rootCallId: ToolCallId('stable-root'),
+      parentCallId: ToolCallId('stable-parent'),
+      subCallId: ToolCallId('stable-nested-search'),
       name: 'tool_search',
       arguments: { query: 'browser' },
       isError: false,
@@ -404,56 +404,6 @@ describe('progressive tools plugin', () => {
       arguments: {},
     }, 'stable-nested-dispatch')
     expect(dispatched.isError).toBe(false)
-  })
-
-  it('restores discovery from a nested dispatch logged under the DSH 0.2 event name', async () => {
-    const source = Session.create(SessionId('stable-restored-nested-dsh02'))
-    source.append('turn/start', { turn: 1 })
-    source.append('step/start', { turn: 1, step: 1 })
-    // 0.2 renamed the `run_code` sub-dispatch log to `tool/ptc-dispatch`, so it
-    // cannot be appended through a 0.1 session; the log entry is replayed as the
-    // 0.2 host writes it.
-    const events = [...source.events, {
-      type: 'tool/ptc-dispatch',
-      data: {
-        rootCallId: 'stable-root',
-        parentCallId: 'stable-parent',
-        subCallId: 'stable-root:ptc:1',
-        name: 'tool_search',
-        arguments: { query: 'browser' },
-        isError: false,
-        content: [{
-          type: 'text',
-          text: JSON.stringify({
-            protocol: 'dsh-progressive-tools/v2',
-            action: 'search',
-            discoveredTools: ['browser_click'],
-          }),
-        }],
-      },
-    }]
-    const session = { id: source.id, snapshotEvents: () => events } as unknown as Session
-
-    const { agent, ctx } = await setup(session)
-    const dispatched = await execute(ctx, agent, 'tool_dispatch', {
-      name: 'browser_click',
-      arguments: {},
-    }, 'stable-nested-dispatch-dsh02')
-    expect(dispatched.isError).toBe(false)
-  })
-
-  it('initializes agent state on the announcement both runtimes emit', async () => {
-    // 0.2 removed `agent/session-start`; `agent/created` is the per-agent
-    // announcement both runtimes emit, so eager initialization listens to it.
-    const { agent, ctx } = await setup(Session.create(SessionId('created-eager')), { mode: 'dynamic' })
-    expect(ctx.tools.schemas(agent).map(schema => schema.name)).toContain('browser_open')
-
-    // 0.2 carries the start source on this payload and 0.1 carries nothing;
-    // passing it through a variable keeps the emit compilable against both.
-    const announcement = { source: 'startup' as const }
-    agentEvents(ctx, agent).emit('agent/created', announcement)
-
-    expect(ctx.tools.schemas(agent).map(schema => schema.name)).not.toContain('browser_open')
   })
 
   it('clamps oversized max_results instead of rejecting the search', async () => {
@@ -492,14 +442,14 @@ describe('progressive tools plugin', () => {
 
     expect(ctx.tools.executionMode({
       signal,
-      callId: CallId('mode-parallel'),
+      callId: ToolCallId('mode-parallel'),
       name: 'tool_dispatch',
       arguments: { name: 'browser_parallel', arguments: {} },
       agent,
     })).toEqual({ kind: 'parallel' })
     expect(ctx.tools.executionMode({
       signal,
-      callId: CallId('mode-exclusive'),
+      callId: ToolCallId('mode-exclusive'),
       name: 'tool_dispatch',
       arguments: { name: 'browser_open', arguments: {} },
       agent,
@@ -529,7 +479,7 @@ describe('progressive tools plugin', () => {
 
   it('restores active families from a durable top-level result projection', async () => {
     const session = Session.create(SessionId('restored-direct'))
-    const callId = CallId('restore-search')
+    const callId = ToolCallId('restore-search')
     session.append('turn/start', { turn: 1 })
     session.append('step/start', { turn: 1, step: 1 })
     session.append('tool/call', {
@@ -567,10 +517,10 @@ describe('progressive tools plugin', () => {
     const session = Session.create(SessionId('restored-nested'))
     session.append('turn/start', { turn: 1 })
     session.append('step/start', { turn: 1, step: 1 })
-    session.append('tool/code-dispatch', {
-      rootCallId: CallId('root'),
-      parentCallId: CallId('parent'),
-      subCallId: CallId('nested-search'),
+    session.append('tool/ptc-dispatch', {
+      rootCallId: ToolCallId('root'),
+      parentCallId: ToolCallId('parent'),
+      subCallId: ToolCallId('nested-search'),
       name: 'tool_search',
       arguments: { query: 'browser' },
       isError: false,
@@ -629,7 +579,7 @@ describe('progressive tools plugin', () => {
     expect(clamped.isError).toBe(false)
     expect((await ctx.tools.execute({
       signal,
-      callId: CallId('unscoped'),
+      callId: ToolCallId('unscoped'),
       name: 'tool_search',
       arguments: { action: 'status' },
     })).isError).toBe(true)

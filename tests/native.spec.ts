@@ -3,7 +3,7 @@ import { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { Session, SessionId } from '@deepseek-ai/dsh-session'
-import { CallId, createToolResultMessage, createUserMessage, HarnessError } from '@deepseek-ai/dsh-llm'
+import { ToolCallId, createToolResultMessage, createUserMessage, HarnessError } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
@@ -32,7 +32,7 @@ async function setup(definitions: ToolDefinition[] = [], config: Plugin.Config =
   }, { inject: ['tools', 'systemPrompt'] }))
   let sequence = 0
   const call = (name: string, args: unknown, abortSignal = signal) => ctx.tools.execute({
-    name, arguments: args, agent, signal: abortSignal, callId: CallId(`call-${++sequence}`),
+    name, arguments: args, agent, signal: abortSignal, callId: ToolCallId(`call-${++sequence}`),
   })
   const assemble = () => ctx.systemPrompt.assemble({ agent, scope: agent, signal })
   return { ctx, agent, plugin, call, assemble }
@@ -121,7 +121,9 @@ describe('native discovery contract', () => {
       { type: 'text', text: 'A durable artifact' },
       { type: 'image', attachment: { attachmentId: 'opaque-image', mediaType: 'image/png', bytes: 99, width: 2, height: 2 } },
     ] as ContentBlock[]
-    const extra = createUserMessage({ source: { kind: 'plugin', plugin: 'fixture' }, content: [{ type: 'text', text: 'follow-up context' }] })
+    // The source vocabulary is merge-extensible and has no catch-all producer
+    // kind, so the fixture declares the one kind every runtime defines.
+    const extra = createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: 'follow-up context' }] })
     const definition = defineTool({
       name: 'vendor_artifact', description: 'Create an artifact', parameters: {},
       output: { schema: { type: 'string' }, render: () => content, presentationMeta: () => ({ artifact: 'opaque' }) },
@@ -163,26 +165,16 @@ describe('native discovery contract', () => {
     const source = Session.create(SessionId('replay'))
     source.append('tool/result', {
       turn: 1, step: 1,
-      message: createToolResultMessage({ callId: CallId('old'), isError: false, content: [{ type: 'text', text: '{}' }] }),
+      message: createToolResultMessage({ callId: ToolCallId('old'), isError: false, content: [{ type: 'text', text: '{}' }] }),
       meta: { protocol: 'dsh-progressive-tools/native-v1', allLoadedTools: ['vendor_alpha'] },
     }, { surfaceOp: 'append' })
-    source.append('tool/code-dispatch', {
-      rootCallId: CallId('root'), parentCallId: CallId('root'), subCallId: CallId('search'), name: 'tool_search', arguments: {}, isError: false,
+    source.append('tool/ptc-dispatch', {
+      rootCallId: ToolCallId('root'), parentCallId: ToolCallId('root'), subCallId: ToolCallId('root:ptc:1'), name: 'tool_search', arguments: {}, isError: false,
       content: [{ type: 'text', text: JSON.stringify({ protocol: 'dsh-progressive-tools/native-v1', loadedTools: ['vendor_beta'] }) }],
     })
-    // DSH 0.2 logs the same sub-dispatch as `tool/ptc-dispatch`. Replay must
-    // read both names, or discovery performed inside `run_code` is lost on
-    // resume and the guard then denies the tool the model already loaded.
-    const nestedUnderDsh02 = {
-      type: 'tool/ptc-dispatch',
-      data: {
-        rootCallId: 'root', parentCallId: 'root', subCallId: 'root:ptc:1', name: 'tool_search', arguments: {}, isError: false,
-        content: [{ type: 'text', text: JSON.stringify({ protocol: 'dsh-progressive-tools/native-v1', loadedTools: ['vendor_other'] }) }],
-      },
-    }
-    const snapshot = { snapshotEvents: () => [...source.events, nestedUnderDsh02] } as unknown as Session
+    const snapshot = { snapshotEvents: () => source.snapshotEvents() } as unknown as Session
     const { assemble } = await setup([fixture('vendor_alpha'), fixture('vendor_beta'), fixture('vendor_other')], {}, snapshot)
-    expect((await assemble()).tools.map(t => t.name)).toEqual(['tool_search', 'vendor_alpha', 'vendor_beta', 'vendor_other'])
+    expect((await assemble()).tools.map(t => t.name)).toEqual(['tool_search', 'vendor_alpha', 'vendor_beta'])
   })
 
   it('unions simultaneous discovery, survives reconnect, isolates agents, and unloads cleanly', async () => {
@@ -208,7 +200,7 @@ describe('native discovery contract', () => {
       execute: async (_args, exec) => {
         const result = await exec.agent!.ctx.tools.execute({
           agent: exec.agent!, name: 'vendor_internal', arguments: { item: 'ok' }, signal: exec.signal,
-          callId: CallId(`${exec.callId}:child`), parent: exec.token, rootCallId: exec.rootCallId,
+          callId: ToolCallId(`${exec.callId}:child`), parent: exec.token, rootCallId: exec.rootCallId,
         })
         return !result.isError
       },
