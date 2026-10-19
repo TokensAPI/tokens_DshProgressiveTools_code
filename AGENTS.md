@@ -23,6 +23,7 @@ families at the cost of cache stability.
 | `src/state.ts` | Dynamic-mode activation state: LRU eviction, turn expiry, snapshots |
 | `src/defaults.ts` | Default config values, always-visible patterns, built-in family rules |
 | `src/types.ts` | Shared public types |
+| `src/host.ts` | Host names and shapes that differ between DSH 0.1 and 0.2 |
 | `tests/` | Vitest suites, including a real AgentLoop request regression test |
 | `docs/` | Architecture, configuration reference, progressive disclosure model |
 | `cordis.patch.yml` | Bundle composition patch consumed by the DSH plugin loader |
@@ -36,6 +37,9 @@ pnpm run lint         # oxlint src tests
 pnpm run test         # vitest run
 pnpm run build        # tsc -p tsconfig.build.json -> lib/
 pnpm run check        # typecheck + lint + test + build + publint (run before finishing)
+
+# the compiled plugin against a real host graph; repeat per supported runtime
+DSH_TEST_RUNTIME=<host package root> pnpm run test:runtime
 ```
 
 ## Invariants that must not break
@@ -55,6 +59,12 @@ pnpm run check        # typecheck + lint + test + build + publint (run before fi
    host execution and presentation intact, and does not implicitly load siblings.
 7. Do not claim model quality or billing improvement from character estimates
    or deterministic fixtures. Report live evaluation limits and cache effects.
+8. One published version must load and work on every runtime the
+   `peerDependencies` range claims. The host disables a plugin whose
+   `@deepseek-ai/dsh*` peers do not cover the running version, so widening that
+   range means checking the APIs in use on each runtime, not just the manifest.
+   `src/host.ts` holds the names that differ; `DSH_TEST_RUNTIME=<host>
+   pnpm run test:runtime` checks the compiled plugin against a real host.
 
 ## Conventions
 

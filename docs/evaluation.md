@@ -63,16 +63,23 @@ not an 80.7% claim about total usage or cost.
 
 ## Regression and runtime checks
 
-- 58 tests passed, including native AgentLoop request projection, exact-name
+- 61 tests passed, including native AgentLoop request projection, exact-name
   loading, paginated recovery, localized group aliases, no implicit sibling
   activation, scope restrictions, post-policy rejection, native content/meta,
   deferred contexts, conclusion, cancellation, errors, reconnect, session
   isolation, snapshot/nested-history restoration and unload.
 - Type checking, lint, compilation and package lint passed on the development
-  runtime 0.1.0-rc.8.
-- Compiled plugin smoke tests passed against the desktop 0.1.3-alpha.1 dependency
-  graph, including snapshot history, first assembly, loading, parameter validation,
-  image content and original presentation metadata.
+  runtime 0.1.0-rc.8. The shipped build (`src` only) also compiles against
+  0.1.5-rc.2 and 0.2.0-rc.2; the test fixtures still pin 0.1 host APIs
+  (`CallId`, `Session.events`, the 0.1.0 sub-dispatch event name, the
+  synchronous `create()` result), so the Vitest suite itself runs on the
+  development runtime only.
+- Compiled plugin smoke tests passed against the real dependency graphs of
+  0.1.0-rc.8, 0.1.5-rc.2 (TokensCowork 0.5) and 0.2.0-rc.2 (TokensCowork 0.6),
+  including snapshot history, first assembly, loading, parameter validation,
+  image content, original presentation metadata, sub-dispatch replay under each
+  runtime's event name, eager initialization on `agent/created`, and the 0.2
+  host's own compatibility verdict for this manifest.
 - Complete browser/desktop rendering, real approval dialogs, full code-runtime
   orchestration, long-context saturation and arbitrary plugin workflows have not
   been exhaustively exercised. No provider-native deferred-reference integration

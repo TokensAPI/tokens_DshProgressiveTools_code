@@ -6,6 +6,49 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.2.5] - 2026-10-19
+
+### Fixed
+
+- **Loads on the DSH 0.2 runtime.** From 0.2 the host decides at startup whether
+  a plugin may load by checking every `@deepseek-ai/dsh*` entry in
+  `peerDependencies` against the running version, resolved with prereleases
+  included. The published 0.2.4 pinned two exact 0.1 versions, so installing it
+  on a 0.2 host disabled it outright, with the reason only on the desktop's
+  standard error output. The five DSH peers and `dsh.engine` now declare
+  `>=0.1.0-rc.8 <0.3.0-0`, which the host's own gate accepts on `0.1.0-rc.8`,
+  `0.1.5-rc.2` and `0.2.0-rc.2`; `0.3` stays out because it has not been
+  checked. A caret or tilde range would not work here: semver adds a
+  `<0.2.0-0` bound to `^0.1.x`, which a `0.2.0-rc.2` host rejects.
+  `@deepseek-ai/cordis` adds the `4.0.4` the 0.2 runtime ships.
+- **Resume no longer forgets tools discovered inside `run_code`.** The host
+  renamed the settled sub-dispatch log from `tool/code-dispatch` to
+  `tool/ptc-dispatch` in 0.1.5, so replay saw none of those entries on any
+  runtime newer than 0.1.0 and the monotonic guard then denied tools the model
+  had already loaded. Replay now reads both names in every mode. The payload
+  fields it folds are unchanged; 0.2 only adds an optional structured `error`.
+- **Eager per-agent initialization survived the removal of
+  `agent/session-start`.** 0.2 deleted that event, which left the catalog to be
+  built lazily at the first assembly and, in `dynamic` mode, left the initial
+  restriction uninstalled until the first claimed turn. Initialization now
+  listens to `agent/created`, the per-agent announcement both runtimes emit for
+  every start source; on 0.1 it runs in the same synchronous publication
+  sequence the removed event ran in.
+
+### Changed
+
+- `src/host.ts` collects the host names and shapes that differ between the two
+  runtimes, so one published build keeps serving both and the next host upgrade
+  has a single place to revisit. `JsonValue` is declared there as well: 0.1
+  re-exported the type from `@deepseek-ai/dsh-tools` and 0.2 moved it to
+  `@deepseek-ai/dsh-util-values` without a re-export.
+- `scripts/native-smoke.mjs` reads the names it needs off the host under test
+  instead of assuming them, and additionally asserts the host's own
+  `evaluatePluginCompatibility` verdict for this manifest when the host ships
+  it. `DSH_TEST_RUNTIME=<host> pnpm run test:runtime` therefore checks a real
+  runtime end to end, and a further rename fails loudly instead of quietly
+  degrading discovery.
+
 ## [Tokens 0.2.4] - 2026-10-12
 
 ### Added

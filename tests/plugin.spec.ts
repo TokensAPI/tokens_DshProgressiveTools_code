@@ -406,6 +406,56 @@ describe('progressive tools plugin', () => {
     expect(dispatched.isError).toBe(false)
   })
 
+  it('restores discovery from a nested dispatch logged under the DSH 0.2 event name', async () => {
+    const source = Session.create(SessionId('stable-restored-nested-dsh02'))
+    source.append('turn/start', { turn: 1 })
+    source.append('step/start', { turn: 1, step: 1 })
+    // 0.2 renamed the `run_code` sub-dispatch log to `tool/ptc-dispatch`, so it
+    // cannot be appended through a 0.1 session; the log entry is replayed as the
+    // 0.2 host writes it.
+    const events = [...source.events, {
+      type: 'tool/ptc-dispatch',
+      data: {
+        rootCallId: 'stable-root',
+        parentCallId: 'stable-parent',
+        subCallId: 'stable-root:ptc:1',
+        name: 'tool_search',
+        arguments: { query: 'browser' },
+        isError: false,
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            protocol: 'dsh-progressive-tools/v2',
+            action: 'search',
+            discoveredTools: ['browser_click'],
+          }),
+        }],
+      },
+    }]
+    const session = { id: source.id, snapshotEvents: () => events } as unknown as Session
+
+    const { agent, ctx } = await setup(session)
+    const dispatched = await execute(ctx, agent, 'tool_dispatch', {
+      name: 'browser_click',
+      arguments: {},
+    }, 'stable-nested-dispatch-dsh02')
+    expect(dispatched.isError).toBe(false)
+  })
+
+  it('initializes agent state on the announcement both runtimes emit', async () => {
+    // 0.2 removed `agent/session-start`; `agent/created` is the per-agent
+    // announcement both runtimes emit, so eager initialization listens to it.
+    const { agent, ctx } = await setup(Session.create(SessionId('created-eager')), { mode: 'dynamic' })
+    expect(ctx.tools.schemas(agent).map(schema => schema.name)).toContain('browser_open')
+
+    // 0.2 carries the start source on this payload and 0.1 carries nothing;
+    // passing it through a variable keeps the emit compilable against both.
+    const announcement = { source: 'startup' as const }
+    agentEvents(ctx, agent).emit('agent/created', announcement)
+
+    expect(ctx.tools.schemas(agent).map(schema => schema.name)).not.toContain('browser_open')
+  })
+
   it('clamps oversized max_results instead of rejecting the search', async () => {
     const { agent, ctx } = await setup()
     await assemble(ctx, agent)

@@ -1,7 +1,9 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import { defineTool, renderToolsSdk, renderToolsSdkPy } from '@deepseek-ai/dsh-tools'
-import type { JsonValue, ToolExecutionToken } from '@deepseek-ai/dsh-tools'
+import type { ToolExecutionToken } from '@deepseek-ai/dsh-tools'
+import { isNestedDispatchEvent } from './host.js'
+import type { JsonValue } from './host.js'
 import { buildCatalog, matchesToolName, searchTools } from './catalog.js'
 import type { ResolvedConfig } from './types.js'
 
@@ -72,7 +74,7 @@ export function applyNativeDiscovery(ctx: Context, config: ResolvedConfig): void
         if (call?.name === config.toolName || (!call && record(data.meta) && data.meta.protocol === PROTOCOL)) {
           for (const name of loadedNames(data.meta).concat(loadedNames(contentValue(block.content)))) loaded.add(name)
         } else if (call?.name === 'skill') bindSkill(agent, loaded, call.args)
-      } else if (event.type === 'tool/code-dispatch' && data.isError === false) {
+      } else if (isNestedDispatchEvent(event.type) && data.isError === false) {
         if (data.name === config.toolName) {
           for (const name of loadedNames(contentValue(data.content))) loaded.add(name)
         } else if (data.name === 'skill') bindSkill(agent, loaded, data.arguments)
@@ -195,7 +197,9 @@ export function applyNativeDiscovery(ctx: Context, config: ResolvedConfig): void
       for (const name of loadedNames(result.value as JsonValue)) loaded.add(name)
     } else if (exec.name === 'skill') bindSkill(exec.agent, loaded, exec.arguments)
   })
-  ctx.on('agent/session-start', ({ agent }) => { stateFor(agent) })
+  // `agent/created` is the per-agent announcement both runtimes emit; 0.2
+  // removed the `agent/session-start` this used to listen to.
+  ctx.on('agent/created', ({ agent }) => { stateFor(agent) })
   ctx.on('agent/disposed', ({ agent }) => { states.delete(agent) })
   ctx.effect(() => () => { nativeParents.clear() })
 }

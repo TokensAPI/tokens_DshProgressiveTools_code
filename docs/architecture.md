@@ -58,7 +58,7 @@ The plugin uses only public Harness APIs and extension points:
 - `ctx.tools.execute()` for nested real-tool execution;
 - `tools/result` for authoritative discovery commits;
 - `tools/change` for in-process catalog invalidation;
-- `agent/session-start` and durable session events for state initialization;
+- `agent/created` and durable session events for state initialization;
 - `agent/disposed` and Cordis effects for cleanup.
 
 ## The DSH lifecycle boundary
@@ -86,9 +86,14 @@ only the following assembly. Version 0.2.0 performs the authoritative
 projection in `system-prompt/assemble`, after all providers have contributed
 but before AgentLoop stores or sends the request.
 
-`agent/session-start` eagerly initializes the catalog for normal creation and
+`agent/created` eagerly initializes the catalog for normal creation and
 resume. The assembly hook remains authoritative and also covers hot reload,
 late registration, and callers that assemble without a normal startup event.
+
+`agent/created` is the one per-agent announcement both supported runtimes
+emit: 0.1 emits it immediately before the `agent/session-start` it also had,
+and 0.2 removed `agent/session-start` and carries the start source on
+`agent/created` instead. `src/host.ts` records every such renamed boundary.
 
 ## Stable-proxy mode
 
@@ -194,7 +199,7 @@ registers a monotonic guard:
 Tokens are registry-minted opaque identities, so a caller cannot manufacture
 the parent capability. Authorized tokens are removed on result and plugin
 cleanup. The guard prepares the agent's state on demand, so a call that
-arrives before the first assembly or session-start event is still classified
+arrives before the first assembly or creation event is still classified
 against the deferred catalog instead of passing through unexamined.
 
 The guard is not an authorization boundary for the underlying capability. It
@@ -231,8 +236,9 @@ On resume the plugin replays successful search results and skill bindings,
 preferring the cumulative metadata when present and unioning per-call
 increments otherwise. The metadata path restores full state from the latest
 surviving entry even when older events were compacted. Nested Code Mode calls
-have no top-level presentation metadata, so their standard
-`tool/code-dispatch` content increments are folded instead. A replayed
+have no top-level presentation metadata, so their standard sub-dispatch
+content increments are folded instead — logged as `tool/code-dispatch` by
+0.1.0 and as `tool/ptc-dispatch` from 0.1.5 on, both of which replay reads. A replayed
 `status` result also restores the catalog-listing grant used by
 `statusGrantsDiscovery`.
 
@@ -246,7 +252,7 @@ without losing the rest of the discovery state.
 `mode: dynamic` retains the v0.1 family activation design for deployments that
 need provider-native definitions after search. Its lifecycle is corrected:
 
-- initial restriction is installed at `agent/session-start`;
+- initial restriction is installed at `agent/created`;
 - turn expiry is reconciled at `agent/inbox/claimed`;
 - successful search and skill results reinstall the restriction immediately;
 - the assembly waterfall filters the already-collected current assembly and

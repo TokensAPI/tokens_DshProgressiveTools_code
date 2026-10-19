@@ -82,14 +82,24 @@ describe('Tokens package contract', () => {
         'en-US': 'Keep frequently used tools in context, discover others on demand, and execute them through the standard DSH safety pipeline.',
       },
     })
+    // DSH 0.2 起,宿主在启动时只按这些 peer 判断插件能不能加载,并且用
+    // includePrerelease 解析范围。手写区间是唯一能同时放过 0.5 的 0.1.5-rc.2
+    // 和 0.6 的 0.2.0-rc.2 的写法:`^0.1.x` / `~0.1.x` 会被 semver 补上
+    // `<0.2.0-0` 上界,装进 0.6 就直接被停用。上界停在没核对过的 0.3。
+    const dshRuntimeRange = '>=0.1.0-rc.8 <0.3.0-0'
     expect(manifest.peerDependencies).toMatchObject({
-      '@deepseek-ai/cordis': '4.0.1 || 4.0.2',
-      '@deepseek-ai/dsh-agent': '0.1.0-rc.8 || 0.1.3-alpha.1',
-      '@deepseek-ai/dsh-llm': '0.1.0-rc.8 || 0.1.3-alpha.1',
-      '@deepseek-ai/dsh-session': '0.1.0-rc.8 || 0.1.3-alpha.1',
-      '@deepseek-ai/dsh-system-prompt': '0.1.0-rc.8 || 0.1.3-alpha.1',
-      '@deepseek-ai/dsh-tools': '0.1.0-rc.8 || 0.1.3-alpha.1',
+      '@deepseek-ai/cordis': '4.0.1 || 4.0.2 || 4.0.4',
+      '@deepseek-ai/dsh-agent': dshRuntimeRange,
+      '@deepseek-ai/dsh-llm': dshRuntimeRange,
+      '@deepseek-ai/dsh-session': dshRuntimeRange,
+      '@deepseek-ai/dsh-system-prompt': dshRuntimeRange,
+      '@deepseek-ai/dsh-tools': dshRuntimeRange,
     })
+    // 宿主检查每一个 `@deepseek-ai/dsh*` peer,有一个不覆盖当前运行时就停用整个
+    // 插件。所以新增 peer 也必须用同一个区间,这里按名字前缀兜住,而不是逐个点名。
+    expect(Object.entries(manifest.peerDependencies)
+      .filter(([pkg]) => pkg === '@deepseek-ai/dsh' || pkg.startsWith('@deepseek-ai/dsh-'))
+      .filter(([, range]) => range !== dshRuntimeRange)).toEqual([])
     expect(manifest.dsh.bundle.patch).toBe('./cordis.patch.yml')
     // dsh.engine 声明目标 DSH 运行时范围。这里不硬编码字面量,而是钉住它与
     // 核心 peer 同源:两者一旦分叉,就是"声明支持某运行时却没有对应的 peer"。

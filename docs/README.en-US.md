@@ -111,9 +111,10 @@ and cancellation still run for the selected real tool.
 ## Requirements
 
 - Node.js `^22.19.0` or `>=24.0.0`
-- Cordis `4.0.1` or `4.0.2`
-- DeepSeek Harness `0.1.0-rc.8`, or the `0.1.3-alpha.1` runtime bundled by
-  desktop `0.4.3`
+- Cordis `4.0.1`, `4.0.2` or `4.0.4`
+- DeepSeek Harness `>=0.1.0-rc.8 <0.3.0-0`: one published version serves both
+  the 0.1 and 0.2 runtimes, verified on `0.1.0-rc.8`, `0.1.5-rc.2` and
+  `0.2.0-rc.2`. 0.3 is outside the range because it has not been checked
 - pnpm for source installation and development
 
 ## Install

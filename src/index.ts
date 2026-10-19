@@ -15,10 +15,11 @@ import { defineTool, renderToolsSdk, renderToolsSdkPy } from '@deepseek-ai/dsh-t
 import type {
   InferValue,
   JsonSchemaNode,
-  JsonValue,
   ToolExecutionResult,
   ToolExecutionToken,
 } from '@deepseek-ai/dsh-tools'
+import { isNestedDispatchEvent } from './host.js'
+import type { JsonValue, NestedDispatchData } from './host.js'
 import {
   buildCatalog,
   estimateSchemaTokens,
@@ -621,8 +622,10 @@ export function apply(ctx: Context, input: Config): void {
         }
         continue
       }
-      if (event.type !== 'tool/code-dispatch') continue
-      const nested = event.data
+      if (!isNestedDispatchEvent(event.type)) continue
+      // Replay reads the sub-dispatch log under either runtime's name, so the
+      // payload is read through the fields both of them log.
+      const nested = event.data as unknown as NestedDispatchData
       if (nested.isError) continue
       if (nested.name === config.toolName) {
         const value = textContentValue(nested.content)
@@ -1021,7 +1024,10 @@ export function apply(ctx: Context, input: Config): void {
     }
   }, { prepend: true })
 
-  ctx.on('agent/session-start', ({ agent }) => {
+  // Eager initialization runs on `agent/created`: it is the one per-agent
+  // announcement both runtimes emit, with the session already live, for every
+  // start source. 0.2 removed the `agent/session-start` this used to listen to.
+  ctx.on('agent/created', ({ agent }) => {
     if (config.mode === 'stable-proxy') prepareStableState(agent)
     else prepareDynamicState(agent, latestTurn(agent))
   }, { prepend: true })

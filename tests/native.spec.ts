@@ -170,9 +170,19 @@ describe('native discovery contract', () => {
       rootCallId: CallId('root'), parentCallId: CallId('root'), subCallId: CallId('search'), name: 'tool_search', arguments: {}, isError: false,
       content: [{ type: 'text', text: JSON.stringify({ protocol: 'dsh-progressive-tools/native-v1', loadedTools: ['vendor_beta'] }) }],
     })
-    const snapshot = { snapshotEvents: () => source.events } as unknown as Session
+    // DSH 0.2 logs the same sub-dispatch as `tool/ptc-dispatch`. Replay must
+    // read both names, or discovery performed inside `run_code` is lost on
+    // resume and the guard then denies the tool the model already loaded.
+    const nestedUnderDsh02 = {
+      type: 'tool/ptc-dispatch',
+      data: {
+        rootCallId: 'root', parentCallId: 'root', subCallId: 'root:ptc:1', name: 'tool_search', arguments: {}, isError: false,
+        content: [{ type: 'text', text: JSON.stringify({ protocol: 'dsh-progressive-tools/native-v1', loadedTools: ['vendor_other'] }) }],
+      },
+    }
+    const snapshot = { snapshotEvents: () => [...source.events, nestedUnderDsh02] } as unknown as Session
     const { assemble } = await setup([fixture('vendor_alpha'), fixture('vendor_beta'), fixture('vendor_other')], {}, snapshot)
-    expect((await assemble()).tools.map(t => t.name)).toEqual(['tool_search', 'vendor_alpha', 'vendor_beta'])
+    expect((await assemble()).tools.map(t => t.name)).toEqual(['tool_search', 'vendor_alpha', 'vendor_beta', 'vendor_other'])
   })
 
   it('unions simultaneous discovery, survives reconnect, isolates agents, and unloads cleanly', async () => {
