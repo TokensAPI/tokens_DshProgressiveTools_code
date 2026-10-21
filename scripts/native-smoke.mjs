@@ -80,7 +80,11 @@ try {
   const boot = await import('@deepseek-ai/dsh-app-boot')
   const runtimeVersion = boot.getDshRuntimeVersion()
   const issue = boot.evaluatePluginCompatibility(manifest)
-  assert.equal(issue, undefined, `peerDependencies reject dsh ${runtimeVersion}: ${JSON.stringify(issue?.peers)}`)
+  // The host renamed the unsatisfied-entry field from `peers` to
+  // `requirements`; reading only one of them prints `undefined` as the reason
+  // on the other host and makes a real rejection unreadable.
+  const unsatisfied = issue?.requirements ?? issue?.peers
+  assert.equal(issue, undefined, `peerDependencies reject dsh ${runtimeVersion}: ${JSON.stringify(unsatisfied)}`)
   compatibility = `accepted by dsh ${runtimeVersion}`
 } catch (error) {
   if (error instanceof assert.AssertionError) throw error

@@ -6,6 +6,35 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.2.7] - 2026-10-21
+
+### Changed
+
+- **The `@deepseek-ai/cordis` peer is a two-sided range instead of an exact
+  version list.** `4.0.1 || 4.0.2 || 4.0.4` named one version per runtime that
+  had been checked, so it silently stopped covering the host as soon as the next
+  patch shipped: the runtime the current product line ships runs cordis 4.0.5 and
+  was not in the list. The peer now reads `>=4.0.1 <5.0.0-0` — the floor is the
+  one 0.2.6 already declared, and the ceiling stops before the next major with
+  a `-0` suffix so a prerelease of it does not land inside the range when the
+  host resolves with prereleases included. The three runtimes in use ship cordis
+  4.0.2 (0.1.5-rc.2), 4.0.4 (0.2.0-rc.2) and 4.0.5 (0.2.1-rc.2), all inside the
+  range. This is a declaration fix with no runtime effect: the host decides
+  loading from the `@deepseek-ai/dsh*` peers alone, and a profile install never
+  resolves peers.
+- **Every `@deepseek-ai` peer is declared optional.** `peerDependenciesMeta`
+  marks the five DSH peers and cordis `optional: true`. The host does not read
+  the flag, so it cannot let a plugin past the startup gate; what it changes is
+  installation. Without it npm and pnpm resolve and install the peers
+  themselves, which puts a second physical copy of the host runtime in a
+  consumer's tree — and those packages find host services through a
+  module-local symbol, so a second copy breaks service lookup. Declaring the
+  peers optional keeps the gate intact and leaves resolution to the host.
+- `tests/package.spec.ts` locks both shapes: every `@deepseek-ai` peer must be a
+  two-sided range whose upper bound carries `-0`, must be marked optional, and
+  `peerDependenciesMeta` may not name a package that is not a peer. Going back
+  to an exact version list, or dropping a flag, fails there.
+
 ## [Tokens 0.2.6] - 2026-10-19
 
 ### Fixed
@@ -313,7 +342,10 @@ prefix is byte-stable again from the second request onward.
 - Bundle manifest, GitHub source-install build path, documentation, tests, and
   continuous integration.
 
-[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.7...HEAD
+[Tokens 0.2.7]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.7
+[Tokens 0.2.6]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.6
+[Tokens 0.2.5]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.5
 [Tokens 0.2.4]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.4
 [Tokens 0.2.3]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.3
 [Tokens 0.2.2]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.2

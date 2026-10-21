@@ -22,6 +22,7 @@ describe('Tokens package contract', () => {
       scripts: Record<string, string>
       devDependencies: Record<string, string>
       peerDependencies: Record<string, string>
+      peerDependenciesMeta: Record<string, { optional?: boolean }>
       dsh: { engine: string; bundle: { patch: string } }
       publishConfig: { access: string; registry: string }
       engines: { node: string }
@@ -104,7 +105,7 @@ describe('Tokens package contract', () => {
     // `<0.2.0-0` 上界,装进 0.6 就直接被停用。上界停在没核对过的 0.3。
     const dshRuntimeRange = '>=0.1.0-rc.8 <0.3.0-0'
     expect(manifest.peerDependencies).toMatchObject({
-      '@deepseek-ai/cordis': '4.0.1 || 4.0.2 || 4.0.4',
+      '@deepseek-ai/cordis': '>=4.0.1 <5.0.0-0',
       '@deepseek-ai/dsh-agent': dshRuntimeRange,
       '@deepseek-ai/dsh-llm': dshRuntimeRange,
       '@deepseek-ai/dsh-session': dshRuntimeRange,
@@ -123,6 +124,29 @@ describe('Tokens package contract', () => {
     expect(name).toBe('tokens-progressive-tools')
     expect(patch).toContain('id: tokens-progressive-tools')
     expect(patch).toContain("name: '@tokensapi/dsh-progressive-tools'")
+  })
+
+  it('declares every host peer as a two-sided optional range', async () => {
+    const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
+      peerDependencies: Record<string, string>
+      peerDependenciesMeta: Record<string, { optional?: boolean }>
+    }
+    const hostPeers = Object.entries(manifest.peerDependencies)
+      .filter(([pkg]) => pkg.startsWith('@deepseek-ai/'))
+
+    expect(hostPeers).not.toEqual([])
+    // 精确版列表要宿主每出一个补丁版就重发一次插件,而且漏掉的那版读起来像
+    // "声明不支持":cordis 的 `4.0.1 || 4.0.2 || 4.0.4` 就漏掉了 0.7 宿主在跑的
+    // 4.0.5。双端区间是唯一不随宿主补丁版腐烂的写法,上界要带 `-0`,否则
+    // includePrerelease 解析时下一个大版本的预发布版会落在范围内。
+    expect(hostPeers.filter(([, range]) => !/^>=\S+ <\S+-0$/.test(range))).toEqual([])
+    // 宿主不读 optional,所以它不会让任何 peer 逃过启动门禁;它管的是安装:
+    // 未标 optional 的 peer 会被 npm/pnpm 自己解析安装,锁文件里就多出第二份
+    // 宿主运行时副本,而运行时包用 module-local Symbol 找服务,第二份副本会让
+    // 服务查找失败。
+    expect(hostPeers.filter(([pkg]) => manifest.peerDependenciesMeta[pkg]?.optional !== true)).toEqual([])
+    // 反过来也要锁:给一个并不存在的 peer 标 optional 是悄悄失效的声明。
+    expect(Object.keys(manifest.peerDependenciesMeta).filter(pkg => !Object.hasOwn(manifest.peerDependencies, pkg))).toEqual([])
   })
 
   it('ships without install lifecycle scripts', async () => {
