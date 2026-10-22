@@ -15,7 +15,8 @@ exact definitions for direct calls through the host's unchanged execution pipeli
 - `src/`: runtime implementation; `tests/`: regression tests.
 - `scripts/`: session audit, reproducible evaluation, runtime smoke checks, release validation.
 - `docs/`: [architecture](./architecture.md), [configuration](./configuration.md),
-  [evaluation evidence](./evaluation.md), [publishing](./publishing.md).
+  [evaluation evidence](./evaluation.md), [host contract](./host-contract.md),
+  [publishing](./publishing.md).
 - `.github/workflows/checks.yml`: multi-version Node checks on branches and pull requests.
 - `.github/workflows/publish-npm.yml`: tag-gated release to the private registry, followed by automatic inspection of the exact published package. The check uses the read-only `PLUGIN_CHECK_REGISTRY_TOKEN`; without it the release warns and skips the check instead of failing. Retry only the package check if it fails.
 - `lib/` and `node_modules/`: generated build output and installed dependencies.
@@ -280,6 +281,26 @@ pnpm run check
 The test suite includes a real AgentLoop request test that captures the first
 wire-ready tool array and verifies that discovery leaves both tools and system
 text unchanged.
+
+### Real-host contracts
+
+The suites above supply their own host, so they cannot see upstream change the
+shape of an interface. The group that runs against a real host is a separate
+command:
+
+```sh
+# the staged host's dsh-plugin-desktop directory
+DSH_HOST_ROOT=<TokensCowork>/.build/desktop/dsh-plugin-desktop pnpm run check:host
+```
+
+It boots a throwaway profile with the host's own launcher, lets the real loader
+install the file set this package publishes, builds a real Agent through the
+host's own factory, and calls every host interface this plugin uses once for
+real (`PT-HOST-01…32`) — nothing is stubbed on the host side. Without
+`DSH_HOST_ROOT` every case reports NOT EXECUTED and the command exits non-zero.
+`--mutate` breaks the path under test to prove the cases are not hollow. See
+[host contract](./host-contract.md) for the method, the interface-to-case table
+and the mutation list.
 
 The implementation follows the public references for
 [architecture](https://deepseek-harness.github.io/deepseek-harness/reference/),

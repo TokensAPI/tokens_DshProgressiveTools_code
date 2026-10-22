@@ -50,6 +50,16 @@ jobs:
       - name: Run checks
         run: pnpm run check
 
+      # The real-host contract group (PT-HOST-*) needs a staged DSH host, which
+      # only exists on the build machine that assembles the product. CI has
+      # none, so those cases report NOT EXECUTED. This step prints that list so
+      # a green CI run is never read as "the host contracts passed too"; the
+      # product gate (agent-hub T0047 B) runs them for real with DSH_HOST_ROOT.
+      - name: Report host contracts not executed here
+        if: always()
+        continue-on-error: true
+        run: pnpm run check:host -- --skip-build
+
   cross-runtime:
     name: Test and build on DSH 0.1.5-rc.2
     runs-on: ubuntu-latest

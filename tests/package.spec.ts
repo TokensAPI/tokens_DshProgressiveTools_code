@@ -50,6 +50,11 @@ describe('Tokens package contract', () => {
     // 两条腿都要跑真实依赖图上的 smoke:单元用例用的是夹具,只有它会把编译产物
     // 装进该运行时真正的依赖图里跑一遍。
     expect(manifest.scripts.check).toContain('pnpm run test:runtime')
+    // 真实宿主契约(PT-HOST-*)要 staged 宿主,CI 上没有,所以它不在 `check` 里;
+    // 但 CI 必须跑一遍把 NOT EXECUTED 清单打出来,否则全绿的 CI 会被读成
+    // "宿主契约也过了"。做法见 docs/host-contract.md。
+    expect(manifest.scripts['check:host']).toBe('node scripts/check-host.mjs')
+    expect(checks).toContain('pnpm run check:host')
     expect(checks).toContain('pnpm run check:dsh-0.1')
     // 开发基线必须是当前产品在跑的运行时,而且所有 DSH 开发依赖同一个版本,否则
     // 装出来的是一个没人发布过的混合运行时。`check:dsh-0.1` 临时重钉时按它的版本核对。
@@ -102,8 +107,14 @@ describe('Tokens package contract', () => {
     // DSH 0.2 起,宿主在启动时只按这些 peer 判断插件能不能加载,并且用
     // includePrerelease 解析范围。手写区间是唯一能同时放过 0.5 的 0.1.5-rc.2
     // 和 0.6 的 0.2.0-rc.2 的写法:`^0.1.x` / `~0.1.x` 会被 semver 补上
-    // `<0.2.0-0` 上界,装进 0.6 就直接被停用。上界停在没核对过的 0.3。
-    const dshRuntimeRange = '>=0.1.0-rc.8 <0.3.0-0'
+    // `<0.2.0-0` 上界,装进 0.6 就直接被停用。
+    //
+    // 上界只挡大版本(2026-10-22 起的统一口径,见 docs/host-contract.md):
+    // 下界仍是本插件真的验证过的那个版本,上界不再停在"没核对过"的下一个小
+    // 版本。内核跨 0.x 小版本时,契约全绿的插件不该只为改一行声明重发一版;
+    // 真正的守门人是 `npm run check:host` 那组真实宿主契约 —— 版本号本来就
+    // 预测不了兼容性(0.2.0 → 0.2.1 这个 rc 小版本就把连接中心打坏了)。
+    const dshRuntimeRange = '>=0.1.0-rc.8 <1.0.0-0'
     expect(manifest.peerDependencies).toMatchObject({
       '@deepseek-ai/cordis': '>=4.0.1 <5.0.0-0',
       '@deepseek-ai/dsh-agent': dshRuntimeRange,

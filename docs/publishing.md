@@ -28,6 +28,16 @@ Because the two triggers are disjoint, nothing runs twice.
 A stable tag must exactly match the package version, for example `v0.2.2` for
 `0.2.2`. Prerelease tags are rejected.
 
+Before tagging, run the real-host contracts against every staged host the peer
+range claims — CI has no staged DSH host, so those cases report NOT EXECUTED
+there and a green CI run does not cover them:
+
+```sh
+DSH_HOST_ROOTS="<root 0.2.1>;<root 0.2.0>;<root 0.1.5>" pnpm run check:host
+```
+
+See [host contract](./host-contract.md).
+
 Tags are the only release path; there is no manual trigger. To retry a failed
 release, re-run the workflow for that tag from the Actions page.
 

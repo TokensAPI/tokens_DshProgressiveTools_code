@@ -10,7 +10,8 @@
 - `src/`：运行时代码；`tests/`：回归测试。
 - `scripts/`：会话审计、可复现评估、运行时冒烟测试和发布校验。
 - `docs/`：[架构](./docs/architecture.md)、[配置](./docs/configuration.md)、
-  [评估证据](./docs/evaluation.md)、[发布](./docs/publishing.md)。
+  [评估证据](./docs/evaluation.md)、[宿主契约](./docs/host-contract.md)、
+  [发布](./docs/publishing.md)。
 - `.github/workflows/checks.yml`：分支与 PR 上的多版本 Node 兼容性检查。
 - `.github/workflows/publish-npm.yml`：按标签发布到私有仓库，发布前执行检查门禁，发布后自动检查准确版本的插件包。包检查使用只读 `PLUGIN_CHECK_REGISTRY_TOKEN`，未配置时警告并跳过，不阻断发布；失败后仅重跑包检查任务。
 - `lib/`、`node_modules/`：构建产物和本地依赖，不提交 Git。
@@ -250,6 +251,23 @@ pnpm run check
 
 测试包含真实 AgentLoop 请求捕获，验证首个请求已经精简，并验证搜索后
 `tools` 数组和系统文本完全不变。
+
+### 真实宿主契约
+
+`pnpm run check` 里的用例自己供宿主，看不见"上游换了接口形状"这类变化。
+对着真实宿主的那一组单独一条命令：
+
+```sh
+# staged 宿主的 dsh-plugin-desktop 目录
+DSH_HOST_ROOT=<TokensCowork>/.build/desktop/dsh-plugin-desktop pnpm run check:host
+```
+
+它用宿主自带的 launcher 起一次性 profile，由真实加载器装入本包发布的文件集，
+再用宿主自己的 agent 工厂造真实 Agent，把插件用到的每个宿主接口各真调一次
+(`PT-HOST-01…32`)；宿主侧一个桩都不打。没有 `DSH_HOST_ROOT` 时每条显式报
+NOT EXECUTED 并以非 0 退出，不伪造通过。`--mutate` 可以把被测路径弄坏来验证
+用例不是空转。做法、接口↔用例对照表和变异清单见
+[宿主契约](./docs/host-contract.md)。
 
 实现依据官方的[架构参考](https://deepseek-harness.github.io/deepseek-harness/reference/)、
 [系统提示子系统](https://deepseek-harness.github.io/deepseek-harness/reference/subsystems/system-prompt)、

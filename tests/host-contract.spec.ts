@@ -76,19 +76,19 @@ const assembled = async (ctx: Context, agent: Agent) =>
   (await ctx.systemPrompt.assemble({ scope: agent, agent, signal })).tools.map(tool => tool.name)
 
 describe('cross-version host contract', () => {
-  it.each(NESTED_DISPATCH_EVENTS)('replays a sub-dispatch logged as %s', async (type) => {
+  it.each(NESTED_DISPATCH_EVENTS)('PT-COMPAT-01 replays a sub-dispatch logged as %s', async (type) => {
     const { ctx, agent } = await setup(sessionLoggingNestedSearch(type, ['vendor_beta']))
 
     expect(await assembled(ctx, agent)).toEqual(['tool_search', 'vendor_beta'])
   })
 
-  it('does not replay a sub-dispatch name no runtime uses', async () => {
+  it('PT-COMPAT-02 does not replay a sub-dispatch name no runtime uses', async () => {
     const { ctx, agent } = await setup(sessionLoggingNestedSearch('tool/future-dispatch', ['vendor_beta']))
 
     expect(await assembled(ctx, agent)).toEqual(['tool_search'])
   })
 
-  it('replays the sub-dispatch name the installed runtime logs', () => {
+  it('PT-COMPAT-03 replays the sub-dispatch name the installed runtime logs', () => {
     // The installed runtime's own vocabulary decides this, so a further rename
     // upstream fails here instead of silently dropping discovery on resume.
     const known = NESTED_DISPATCH_EVENTS.filter(type => KNOWN_SESSION_EVENT_TYPES.has(type))
@@ -97,7 +97,7 @@ describe('cross-version host contract', () => {
     expect(known.every(type => isNestedDispatchEvent(type))).toBe(true)
   })
 
-  it('reads a tool result logged under either runtime envelope', async () => {
+  it('PT-COMPAT-04 reads a tool result logged under either runtime envelope', async () => {
     // Every 0.1 release wrapped the blocks in one `tool-result` content block
     // carrying `isError`; 0.2 dropped that wrapper and moved `isError` onto a
     // tool-role message. Both shapes are built by hand and asserted separately,
@@ -133,7 +133,7 @@ describe('cross-version host contract', () => {
     }
   })
 
-  it('reads the tool-result envelope the installed runtime itself writes', () => {
+  it('PT-COMPAT-05 reads the tool-result envelope the installed runtime itself writes', () => {
     // The case above builds both envelopes by hand, so it passes on either
     // runtime whether or not the reader still understands the installed one.
     // Here the shape comes from the runtime's own constructor, so a third
@@ -158,7 +158,7 @@ describe('cross-version host contract', () => {
     expect(wrapped ? content[0]?.isError : record.isError).toBe(false)
   })
 
-  it('reads a legacy session that exposes an events array instead of snapshotEvents', async () => {
+  it('PT-COMPAT-06 reads a legacy session that exposes an events array instead of snapshotEvents', async () => {
     // The 0.1.0 `Session.events` getter is gone from every runtime in use, but
     // a persisted snapshot handed to the plugin may still arrive in that shape.
     const logged = sessionLoggingNestedSearch('tool/ptc-dispatch', ['vendor_beta'])
@@ -168,7 +168,7 @@ describe('cross-version host contract', () => {
     expect(await assembled(ctx, agent)).toEqual(['tool_search', 'vendor_beta'])
   })
 
-  it('initializes agent state on the announcement the installed runtime emits', async () => {
+  it('PT-COMPAT-07 initializes agent state on the announcement the installed runtime emits', async () => {
     // 0.2 removed `agent/session-start`; `agent/created` is the per-agent
     // announcement every supported runtime emits. In dynamic mode the effect is
     // observable, because initialization installs the restriction right there.

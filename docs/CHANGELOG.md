@@ -6,6 +6,62 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [Tokens 0.2.8] - 2026-10-22
+
+### Added
+
+- **A real-host contract suite: `npm run check:host`.** Every other suite in
+  this repository supplies its own host — a hand-built `Context` from the dev
+  dependencies, or a resolve hook pointing `@deepseek-ai/*` at a staged tree.
+  Neither can see the host change the shape of something: DSH 0.2.1 turned the
+  gateway's `peer` argument from optional into required and broke another
+  plugin across four product releases while its three thousand stubbed cases
+  stayed green. The new suite stubs nothing on the host side. It boots a
+  throwaway `$DSH_HOME` profile with the host's own launcher, lets the **real
+  loader** install the file set this package publishes, has the host's own
+  `ctx.agents` factory build a real Agent and Session, and then calls **every
+  host interface this plugin uses** once for real: tool registration and the
+  host's schema projection, the execution pipeline, `ctx.tools.guard`,
+  `ctx.tools.restrict`, nested `ctx.tools.execute` dispatch, `HarnessError`
+  routing, `executionMode` delegation, `ctx.systemPrompt.section`, the
+  `system-prompt/assemble` middleware, the four agent-lifecycle events,
+  `tools/change`, replay from a session log the host itself wrote, the host's
+  session-event vocabulary, and the host's own `evaluatePluginCompatibility`.
+  All three modes (`native`, `stable-proxy`, `dynamic`) boot separately,
+  because their guards and tool names collide in one tree. Cases
+  `PT-HOST-01…32` plus `PT-GUARD-01…03`; `tests/host-contract.spec.ts` is now
+  numbered `PT-COMPAT-01…07` and the existing real-runtime smoke runs as
+  `PT-SMOKE-01`, all under the same command. Without `DSH_HOST_ROOT` every case
+  reports **NOT EXECUTED** and the command exits non-zero — it never fakes a
+  pass. Documented in `docs/host-contract.md`, including the interface-to-case
+  table.
+- **Mutation verification as a standing mechanism**
+  (`npm run check:host -- --mutate <name>`, `--list-mutations`). A contract case
+  that never walks the path it claims to test passes forever; this breaks the
+  path under test in the installed copy and requires *exactly* the declared
+  cases to turn red. It already caught two hollow cases of its own during
+  development. Two gate-effectiveness results: `peer-0.1-only` (the dsh peer
+  ceiling pushed back to `<0.2.0-0`) turns 24 cases red on 0.2.1-rc.2 and
+  0.2.0-rc.2 and **none** on 0.1.5-rc.2, and `flat-envelope-only` turns
+  PT-HOST-31 red on 0.1.5-rc.2 and none on either 0.2 line.
+
+### Changed
+
+- **The dsh peer ceiling is `<1.0.0-0` instead of `<0.3.0-0`.** The floor still
+  names the runtime this plugin has actually been verified against; the ceiling
+  now only stops the next major. A ceiling parked at the next unverified minor
+  forces a release whose only content is one edited line every time the kernel
+  moves within 0.x, and it buys nothing: a version number cannot predict
+  compatibility — the 0.2.0 → 0.2.1 release candidate is exactly what broke
+  another plugin. The gatekeeper is `check:host`, not the range. `dsh.engine`
+  follows the core peer, and `tests/package.spec.ts` keeps the two tied
+  together.
+
+### Note
+
+- Tests, scripts, workflow and documentation only. No runtime code changed in
+  this release; the sole declaration change is the peer ceiling above.
+
 ## [Tokens 0.2.7] - 2026-10-21
 
 ### Changed
@@ -342,7 +398,8 @@ prefix is byte-stable again from the second request onward.
 - Bundle manifest, GitHub source-install build path, documentation, tests, and
   continuous integration.
 
-[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.7...HEAD
+[Unreleased]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.8...HEAD
+[Tokens 0.2.8]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/compare/v0.2.7...v0.2.8
 [Tokens 0.2.7]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.7
 [Tokens 0.2.6]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.6
 [Tokens 0.2.5]: https://github.com/TokensAPI/tokens_DshProgressiveTools_code/releases/tag/v0.2.5
